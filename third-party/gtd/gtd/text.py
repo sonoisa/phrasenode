@@ -26,8 +26,6 @@ class NER(object):
 
     def __call__(self, text):
         """Given a unicode string, return a tuple of the named entities found inside."""
-        if not isinstance(text, unicode):
-            text = unicode(text)
         doc = self.processor(text)
         return doc.ents
 

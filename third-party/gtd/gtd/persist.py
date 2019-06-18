@@ -5,7 +5,6 @@ import os.path
 from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import MutableMapping, Mapping, Sequence, Iterator
 from contextlib import contextmanager
-from itertools import izip
 
 from sqlalchemy import MetaData
 from sqlalchemy.engine.url import URL
@@ -153,13 +152,13 @@ class CacheWrapperMixin(object):
         return len(self.cache)
 
     def iteritems(self):
-        return self.cache.iteritems()
+        return self.cache.items()
 
     def iterkeys(self):
-        return self.cache.iterkeys()
+        return self.cache.keys()
 
     def itervalues(self):
-        return self.cache.itervalues()
+        return self.cache.values()
 
     def keys(self):
         return self.cache.keys()
@@ -231,11 +230,11 @@ class LazyMapping(CacheWrapperMixin, BatchMapping):
                 int: the number of keys which were freshly computed
         """
         presence = self.cache.contains_batch(keys)
-        to_compute = [key for key, present in izip(keys, presence) if not present]
+        to_compute = [key for key, present in zip(keys, presence) if not present]
         computed = self.compute_batch(to_compute)
 
         updates = []
-        for key, val in izip(to_compute, computed):
+        for key, val in zip(to_compute, computed):
             if not isinstance(val, Failure):
                 updates.append((key, val))
 
@@ -568,7 +567,7 @@ class TableMapping(BatchMutableMapping):
         row = self._key_orm.to_row(key)
         row.update(self._val_orm.to_row(val))
         if string_cols:
-            row = {col.name: v for col, v in row.iteritems()}
+            row = {col.name: v for col, v in row.items()}
         return row
 
     def del_batch(self, keys):
@@ -598,7 +597,7 @@ class TableMapping(BatchMutableMapping):
         assert len(keys) == len(set(keys))
 
         present_keys = []
-        for key, present in izip(keys, self.contains_batch(keys)):
+        for key, present in zip(keys, self.contains_batch(keys)):
             if present:
                 present_keys.append(key)
 
@@ -622,17 +621,17 @@ class TableMapping(BatchMutableMapping):
         return iter(self)
 
     def itervalues(self):
-        for _, val in self.iteritems():
+        for _, val in self.items():
             yield val
 
     def keys(self):
-        return list(self.iterkeys())
+        return list(self.keys())
 
     def items(self):
-        return list(self.iteritems())
+        return list(self.items())
 
     def values(self):
-        return list(self.itervalues())
+        return list(self.values())
 
 
 class FileMapping(MutableMapping, Closeable):

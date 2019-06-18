@@ -109,9 +109,9 @@ class WordVocab(SimpleVocab):
 
     A WordVocab is required to have the following special tokens: UNK, START, STOP.
     """
-    UNK = u'<unk>'
-    START = u'<start>'
-    STOP = u'<stop>'
+    UNK = '<unk>'
+    START = '<start>'
+    STOP = '<stop>'
     SPECIAL_TOKENS = (UNK, START, STOP)
 
     def __init__(self, tokens):
@@ -206,8 +206,8 @@ class SimpleEmbeddings(Mapping):
         array = self.array
         with codecs.open(file_path, 'w', encoding='utf-8') as f:
             for i, word in enumerate(self.vocab):
-                vec_str = u' '.join(str(x) for x in array[i])
-                f.write(u'{} {}'.format(word, vec_str))
+                vec_str = ' '.join(str(x) for x in array[i])
+                f.write('{} {}'.format(word, vec_str))
                 f.write('\n')
 
     def with_special_tokens(self, special_tokens=None, random_seed=0):

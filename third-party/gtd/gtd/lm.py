@@ -23,7 +23,7 @@ def normalize_counts(counts):
     normed = Counter()
     total = sum(counts.values(), 0.0)
     assert total > 0  # cannot normalize empty Counter
-    for key, ct in counts.iteritems():
+    for key, ct in counts.items():
         normed[key] = ct / total
     normed.old_total = total  # document what the total was before normalization
     return normed

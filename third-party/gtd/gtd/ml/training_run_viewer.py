@@ -61,7 +61,7 @@ class TrainingRunViewer(object):
                 try:
                     s = render(path)
                 except:
-                    s = u''
+                    s = ''
                 row.append(s)
 
             # record types
@@ -74,7 +74,7 @@ class TrainingRunViewer(object):
 
         # display types for each attribute
         type_table = PrettyTable(['attribute', 'types'])
-        for name, type_set in types.iteritems():
+        for name, type_set in types.items():
             type_table.add_row([name, ', '.join(t.__name__ for t in type_set)])
         self._print_table(type_table)
 
@@ -84,7 +84,7 @@ class TrainingRunViewer(object):
             jupyter_no_margins()
             display(HTML(table.get_html_string()))
         else:
-            print table
+            print(table)
 
 
 class Renderer(object):

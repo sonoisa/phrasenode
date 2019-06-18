@@ -1,6 +1,5 @@
 """Richer embeddings for nodes"""
 from collections import namedtuple, defaultdict
-from itertools import izip
 import random
 
 import numpy as np

@@ -24,9 +24,9 @@ class Graph(object):
 
         def freeze(d):
             frozen = {}
-            for key, subdict in d.iteritems():
+            for key, subdict in d.items():
                 frozen[key] = {}
-                for subkey, set_val in subdict.iteritems():
+                for subkey, set_val in subdict.items():
                     frozen[key][subkey] = tuple(set_val)
             return frozen
 
@@ -75,7 +75,7 @@ class Graph(object):
 
         while len(queue) != 0:
             current = queue.pop()
-            for rel, nbrs in self.neighbors[current].iteritems():
+            for rel, nbrs in self.neighbors[current].items():
                 for nbr in nbrs:
                     if nbr not in explored:
                         enqueue(nbr, (rel, current))
@@ -181,7 +181,7 @@ class Graph(object):
         stats = defaultdict(dict)
         rel_counts = Counter(r for s, r, t in self.triples)
 
-        for r, args in self.relation_args.iteritems():
+        for r, args in self.relation_args.items():
             out_degrees, in_degrees = [], []
             for s in args['s']:
                 out_degrees.append(len(self.neighbors[s][r]))

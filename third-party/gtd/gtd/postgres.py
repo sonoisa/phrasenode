@@ -258,7 +258,7 @@ class Postgres(object):
         results = list(self.iter_table(name))
         table = defaultdict(list)
         for res in results:
-            for key, val in res.iteritems():
+            for key, val in res.items():
                 table[key].append(val)
         return table
 

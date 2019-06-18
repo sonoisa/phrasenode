@@ -1,4 +1,4 @@
-import cPickle as pickle
+import _pickle as pickle
 import shutil
 from os import listdir
 import os
@@ -46,12 +46,12 @@ class TrainState(object):
 
         # pickle remaining attributes
         d = {attr: getattr(self, attr) for attr in ['train_steps', 'random_state', 'max_grad_norm']}
-        with open(join(path, 'metadata.p'), 'w') as f:
+        with open(join(path, 'metadata.pkl'), 'wb') as f:
             pickle.dump(d, f)
 
     @classmethod
     def load(cls, path, model, optimizer):
-        with open(join(path, 'metadata.p'), 'r') as f:
+        with open(join(path, 'metadata.pkl'), 'rb') as f:
             d = pickle.load(f)
 
         # load model
@@ -128,11 +128,11 @@ class Checkpoints(object):
         """
         ckpt_num = self.latest_checkpoint_number
         if ckpt_num is None:
-            print 'No checkpoint to reload. Initializing fresh.'
+            print('No checkpoint to reload. Initializing fresh.')
             return TrainState.initialize(model, optimizer)
         else:
             train_state = self.load(self.latest_checkpoint_number, model, optimizer)
-            print 'Reloaded checkpoint #{}'.format(ckpt_num)
+            print('Reloaded checkpoint #{}'.format(ckpt_num))
             return train_state
 
     def delete(self, train_steps):

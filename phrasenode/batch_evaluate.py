@@ -16,7 +16,6 @@ Output format: Copy of the dataset but with the following additional attributes:
 
 import sys, os, shutil, re, argparse, json
 from codecs import open
-from itertools import izip
 from collections import defaultdict, Counter
 
 from tqdm import tqdm
@@ -44,8 +43,8 @@ def main():
             assert 'exampleId' in line
             assert 'predictions' in line
             inputs[line['exampleId']] = line['predictions']
-    print >> sys.stderr, 'Read {} input lines from {}'.format(
-            len(inputs), args.infile)
+    print('Read {} input lines from {}'.format(
+            len(inputs), args.infile))
 
     # Read good-xids
     if args.good_xids:
@@ -54,8 +53,8 @@ def main():
             for line in fin:
                 line = json.loads(line)
                 good_xids[line['version'], line['webpage']] = line['xids']
-        print >> sys.stderr, 'Read {} good xids entries'.format(
-                len(good_xids))
+        print('Read {} good xids entries'.format(
+                len(good_xids)))
 
     storage = PhraseNodeStorage(data.workspace.phrase_node)
     all_examples = storage.load_examples(args.set_name)
@@ -90,9 +89,9 @@ def main():
                     stats.accuracy += prediction['match']
                     stats.area_f1 += prediction['f1']
                     read_top_prediction = True
-            print json.dumps(answer)
+            print(json.dumps(answer))
 
-    print >> sys.stderr, stats
+    print(stats)
 
 if __name__ == '__main__':
     main()

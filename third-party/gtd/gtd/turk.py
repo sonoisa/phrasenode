@@ -70,7 +70,7 @@ def _get_all_hits(get_page):
             executor.submit(i, i)
         for i, page in verboserate(executor.results(), desc='Fetching pages of HITs', total=total_pages):
             if isinstance(page, Failure):
-                print page.traceback
+                print(page.traceback)
                 continue
             for hit in page:
                 yield hit
@@ -161,7 +161,7 @@ class Task(object):
     def report_progress(self):
         completed = len(list(self.get_reviewable_hits()))
         total = len(list(self.get_hits()))
-        print '{}/{} complete'.format(completed, total)
+        print('{}/{} complete'.format(completed, total))
 
     def review_hits(self, print_assignment):
         """Interactively reject/approve all HITs associated with this task."""
@@ -177,13 +177,13 @@ class Task(object):
             try:
                 self._mtc.dispose_hit(assignment.HITId)
             except MTurkRequestError:
-                print 'Failed to dispose HIT {}'.format(assignment.HITId)
+                print('Failed to dispose HIT {}'.format(assignment.HITId))
                 raise
 
         total_workers = len(worker_to_assignments)
         for i, (worker, assignments) in enumerate(worker_to_assignments.items()):
-            print "Answers of worker {} ({} of {}, completed {} HITs):".format(worker, i+1, total_workers,
-                                                                               len(assignments))
+            print("Answers of worker {} ({} of {}, completed {} HITs):".format(worker, i+1, total_workers,
+                                                                               len(assignments)))
 
             while True:
                 assignment = random.choice(assignments)
@@ -192,12 +192,12 @@ class Task(object):
                 answer = self._prompt_yes_no_more()
                 if answer == "y":
                     parallel_call(approve, assignments)
-                    print "Approved all assignments for this worker"
+                    print("Approved all assignments for this worker")
                     break
                 elif answer == "n":
-                    print "Did not approve assignments for this worker"
+                    print("Did not approve assignments for this worker")
                     break
-            print "\n----- ----- ----- ----- ----- ----- ----- ----- ----- ----- \n"
+            print("\n----- ----- ----- ----- ----- ----- ----- ----- ----- ----- \n")
 
     def _prompt_yes_no_more(self):
         """Ask a [y]es/[n]o/[s]ee more question via raw_input() and return their answer.
@@ -247,7 +247,7 @@ class ExternalQuestionTask(Task):
         assert isinstance(self._price_per_hit, float)
         total_cost = total_hits * self._price_per_hit
 
-        print 'Launching {} HITs (${}). Type Enter to continue.'.format(total_hits, total_cost)
+        print('Launching {} HITs (${}). Type Enter to continue.'.format(total_hits, total_cost))
         raw_input()
 
         parallel_call(self.create_hit, batches)
