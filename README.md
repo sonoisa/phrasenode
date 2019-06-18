@@ -7,11 +7,11 @@ Due to its large size, the data is hosted outside Github:
 
 ## Setup
 
-Note that the code requires Python 2.7.
+Note that the code requires Python 3.6.
 
 - (Optional) Create a virtualenv / conda environment
   ```
-  virtualenv.py -p python2.7 env
+  virtualenv.py -p python3.6 env
   source env/bin/activate
   ```
 
