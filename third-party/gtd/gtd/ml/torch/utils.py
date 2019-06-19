@@ -227,3 +227,15 @@ def batch_tile(v, batch_size):
     new_dims = [batch_size]
     new_dims.extend(v.size())
     return v.unsqueeze(0).expand(new_dims)
+
+def isfinite(v):
+    """
+    Check v is finite value or not.
+    
+    Args:
+        v (Variable)
+    
+    Returns:
+        1:finite, 0:not finite (Variable)
+    """
+    return ((x + 1) != x) & (x == x)
