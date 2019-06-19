@@ -238,4 +238,4 @@ def isfinite(v):
     Returns:
         1:finite, 0:not finite (Variable)
     """
-    return ((x + 1) != x) & (x == x)
+    return ((v + 1) != v) & (v == v)
