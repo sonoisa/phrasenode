@@ -147,7 +147,7 @@ class EncodingModel(nn.Module):
         #print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
         #print [logits.data[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
         #print logits, targets, mask, losses
-        if not np.isfinite(losses.data.sum()):
+        if not np.isfinite(losses.cpu().data.sum()):
             #raise ValueError('Losses has NaN')
             logging.warn('Losses has NaN')
             #print losses
