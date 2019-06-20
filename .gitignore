@@ -4,7 +4,11 @@
 *.swo
 *~
 
+.DS_Store
+data.html
+
+/.idea
+/.ipynb_checkpoints
 /data
 /env
-/.idea
 /downloads
