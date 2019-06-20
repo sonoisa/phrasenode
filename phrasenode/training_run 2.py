@@ -18,7 +18,6 @@ from tqdm import tqdm
 from torch.nn.utils import clip_grad_norm_
 
 from gtd.ml.torch.training_run import TorchTrainingRun
-from gtd.ml.torch.utils import try_gpu
 from gtd.ml.training_run import TrainingRuns
 
 from phrasenode import data
@@ -71,7 +70,7 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
     def _create_model(self):
         config = self.config
         self.model = create_model(config)
-        self.model = try_gpu(self.model)
+        self.model = self.model.to(config.device)
         self.optimizer = optim.Adam(self.model.parameters(),
                                     lr=self.config.train.learning_rate,
                                     weight_decay=self.config.train.l2_reg)

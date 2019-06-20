@@ -8,7 +8,7 @@ from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
 import torch.nn.functional as F
 
-from gtd.ml.torch.utils import GPUVariable as V
+from gtd.ml.torch.utils import GPUVariable as V, isfinite
 
 
 class EnsembleModel(nn.Module):
@@ -44,9 +44,9 @@ class EnsembleModel(nn.Module):
         losses = self.loss(logits, targets) * mask
         # print '=' * 20, examples[0].web_page_code
         # print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
-        # print [logits.data[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
+        # print [logits.detach()[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
         # print logits, targets, mask, losses
-        if not np.isfinite(losses.data.sum()):
+        if not isfinite(losses.detach().sum()):
             # raise ValueError('Losses has NaN')
             logging.warning('Losses has NaN')
             # print losses

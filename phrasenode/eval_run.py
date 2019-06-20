@@ -85,7 +85,7 @@ class PhraseNodeEvalRun(object):
         # evaluate
         for i, example in enumerate(examples):
             # Top prediction
-            pred_ref = predictions.data[i][0]
+            pred_ref = predictions.detach()[i][0]
             pred_node = web_page[pred_ref]
             pred_xid = pred_node.xid
             match = (example.target_xid == pred_xid)
@@ -97,7 +97,7 @@ class PhraseNodeEvalRun(object):
             str_acc = self._check_str(pred_node, target_node)
 
             # Oracle
-            oracle = bool(target_ref is not None and logits.data[i, target_ref] > -99999)
+            oracle = bool(target_ref is not None and logits.detach()[i, target_ref] > -99999)
 
             stats.accuracy += float(match)
             stats.area_f1 += f1
@@ -108,7 +108,7 @@ class PhraseNodeEvalRun(object):
             metadata['oracle'] = oracle
             metadata['predictions'] = []
             pred_xids = set()
-            for pred_ref in predictions.data[i]:
+            for pred_ref in predictions.detach()[i]:
                 pred_node = web_page[pred_ref]
                 pred_xid = pred_node.xid
                 pred_xids.add(pred_xid)
@@ -116,7 +116,7 @@ class PhraseNodeEvalRun(object):
                 prec, rec, f1 = web_page.overlap_eval(target_ref, pred_ref)
                 str_acc = self._check_str(pred_node, target_node)
                 metadata['predictions'].append({
-                    'xid': pred_xid, 'score': float(logits.data[i, pred_ref]),
+                    'xid': pred_xid, 'score': float(logits.detach()[i, pred_ref]),
                     'match': match,
                     'prec': prec, 'rec': rec, 'f1': f1,
                     'str_acc': str_acc,
@@ -125,7 +125,7 @@ class PhraseNodeEvalRun(object):
                 prec, rec, f1 = web_page.overlap_eval(target_ref, target_ref)
                 str_acc = self._check_str(target_node, target_node)
                 metadata['predictions'].append({
-                    'xid': example.target_xid, 'score': float(logits.data[i, target_ref]),
+                    'xid': example.target_xid, 'score': float(logits.detach()[i, target_ref]),
                     'match': True,
                     'prec': prec, 'rec': rec, 'f1': f1,
                     'str_acc': str_acc

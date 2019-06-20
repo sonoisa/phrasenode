@@ -1,10 +1,11 @@
 from datetime import datetime
-import numpy as np
-from torch.nn.utils import clip_grad_norm
+
+from torch.nn.utils import clip_grad_norm_
 
 from gtd.ml.training_run import TrainingRun
 from gtd.ml.torch.checkpoints import Checkpoints
 from gtd.utils import cached_property
+from gtd.ml.torch.utils import isfinite
 
 
 class TorchTrainingRun(TrainingRun):
@@ -29,7 +30,7 @@ class TorchTrainingRun(TrainingRun):
         for param in parameters:
             if param.grad is None:
                 continue
-            if not np.isfinite(param.grad.data.sum()):
+            if not isfinite(param.grad.detach().sum()):
                 return False
         return True
 
@@ -53,7 +54,7 @@ class TorchTrainingRun(TrainingRun):
         loss.backward()
 
         # clip according to the max allowed grad norm
-        grad_norm = clip_grad_norm(model.parameters(), max_grad_norm, norm_type=2)
+        grad_norm = clip_grad_norm_(model.parameters(), max_grad_norm, norm_type=2)
         # (this returns the gradient norm BEFORE clipping)
 
         # track the gradient norm over time

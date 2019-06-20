@@ -29,19 +29,6 @@ def conditional(b, x, y):
     return b * x + (1 - b) * y
 
 
-def to_numpy(x):
-    if isinstance(x, Variable):
-        x = x.data  # unwrap Variable
-
-    if isinstance(x, _TensorBase):
-        x = x.cpu().numpy()
-    return x
-
-
-def assert_tensor_equal(x, y, decimal=6):
-    assert_array_almost_equal(to_numpy(x), to_numpy(y), decimal=decimal)
-
-
 def expand_dims_for_broadcast(low_tensor, high_tensor):
     """Expand the dimensions of a lower-rank tensor, so that its rank matches that of a higher-rank tensor.
 

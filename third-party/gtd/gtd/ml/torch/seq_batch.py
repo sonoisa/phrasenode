@@ -21,7 +21,7 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
         if not isinstance(values, Variable) or not isinstance(mask, Variable):
             raise ValueError('values and mask must both be of type Variable.')
 
-        m = mask.data
+        m = mask.detach()
 
         if len(m.size()) == 0:
             raise ValueError('Mask must not be 0-dimensional')
@@ -180,7 +180,7 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
         if allow_empty:
             sums[sums == 0.0] = 1.0  # Modify in-place: replace zeros with ones
         else:
-            if (sums.data == 0).any():
+            if (sums.detach() == 0).any():
                 raise ValueError("Averaging zero elements.")
 
         weights = mask / sums.expand(*mask.size())
@@ -188,7 +188,7 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
 
     @classmethod
     def _empty_seqs(cls, seq_batch):
-        return (torch.sum(seq_batch.mask, 1).data == 0).any()
+        return (torch.sum(seq_batch.mask, 1).detach() == 0).any()
 
     @classmethod
     def reduce_max(cls, seq_batch):

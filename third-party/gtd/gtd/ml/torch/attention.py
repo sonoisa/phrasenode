@@ -2,8 +2,8 @@ from collections import namedtuple
 
 import math
 import torch
-import numpy as np
-from gtd.ml.torch.utils import GPUVariable
+
+from gtd.ml.torch.utils import GPUVariable, isfinite
 from torch.nn import Parameter
 from torch.nn import Softmax, Tanh, Module
 
@@ -224,7 +224,7 @@ class SoftCopyAttention(Module):
     @staticmethod
     def _is_subset(a, b):
         """Check that boolean tensor a is a subset of b."""
-        return torch.prod(b - a >= 0).data.sum() == 1
+        return torch.prod(b - a >= 0).detach().sum() == 1
 
     def forward(self, memory_cells, query, alignments, copy_source):
         """Compute attention with soft-copy.
@@ -273,7 +273,7 @@ class SoftCopyAttention(Module):
         weights = boosted_exp_logits / normalizer
         weights = Attention._mask_weights(weights, memory_cells.mask)
 
-        if not np.isfinite(weights.data.sum()):
+        if not isfinite(weights.detach().sum()):
             raise ValueError('Some attention weights are NaN')
             # TODO(kelvin): need to avoid numerical precision issues
             # TODO(kelvin): need to avoid division by zero
@@ -300,16 +300,16 @@ class SoftCopyAttentionTrace(object):
             copy_elements (list[object])
             alignments (SequenceBatch)
         """
-        self._weights = soft_copy_attn_out.weights.data[idx]
+        self._weights = soft_copy_attn_out.weights.detach()[idx]
         self._memory_elements = memory_elements
 
-        self._orig_logits = soft_copy_attn_out.orig_logits.data[idx]  # (num_cells,)
+        self._orig_logits = soft_copy_attn_out.orig_logits.detach()[idx]  # (num_cells,)
 
-        self._boost = soft_copy_attn_out.boost.data[idx]  # (num_cells,)
+        self._boost = soft_copy_attn_out.boost.detach()[idx]  # (num_cells,)
 
         self._boost_elements = []
-        alignment_vals = alignments.values.data[idx]
-        alignment_mask = alignments.mask.data[idx]
+        alignment_vals = alignments.values.detach()[idx]
+        alignment_mask = alignments.mask.detach()[idx]
         for j, mask_val in zip(alignment_vals, alignment_mask):
             elem = copy_elements[j] if mask_val == 1.0 else None
             self._boost_elements.append(elem)
