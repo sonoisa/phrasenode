@@ -6,7 +6,7 @@ from os.path import join
 
 import torch
 
-import gtd
+from gtd.io import makedirs
 from gtd.ml.torch.utils import RandomState
 
 
@@ -35,7 +35,7 @@ class TrainState(object):
         self.max_grad_norm = max(self.max_grad_norm, 2 * grad_norm)
 
     def save(self, path):
-        gtd.io.makedirs(path)
+        makedirs(path)
 
         # Store the latest random state
         self.random_state = RandomState()

@@ -400,7 +400,6 @@ class GraphCreator(object):
                 on the leaf nodes
         """
         if isinstance(web_page, str):
-            from phrasenode.webpage import WebPage
             web_page = WebPage(web_page)
         self.web_page = web_page
         self.max_pixels = max_pixels
