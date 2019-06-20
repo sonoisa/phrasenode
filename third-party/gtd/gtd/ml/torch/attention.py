@@ -13,13 +13,14 @@ from gtd.ml.torch.utils import conditional, NamedTupleLike
 
 class AttentionOutput(namedtuple('AttentionOutput', ['weights', 'context', 'logits']), NamedTupleLike):
     pass
-"""
-Attributes:
-    weights (Variable): of shape (batch_size, num_cells)
-    context (Variable): of shape (batch_size, memory_dim)
-    logits (Variable): of shape (batch_size, num_cells), the weights before
-        they have been softmaxed
-"""
+    """
+    Attributes:
+        weights (Variable): of shape (batch_size, num_cells)
+        context (Variable): of shape (batch_size, memory_dim)
+        logits (Variable): of shape (batch_size, num_cells), the weights before
+            they have been softmaxed
+    """
+
 
 class DummyAttention(Module):
     def __init__(self, memory_dim, query_dim, attn_dim):
@@ -34,6 +35,7 @@ class DummyAttention(Module):
         weights = GPUVariable(torch.zeros(batch_size, num_cells))
         context = GPUVariable(torch.zeros(batch_size, self.memory_dim))
         return AttentionOutput(weights=weights, context=context, logits=logits)
+
 
 class Attention(Module):
     def __init__(self, memory_dim, query_dim, attn_dim):
@@ -190,7 +192,7 @@ class SentinelAttention(Attention):
 
         attention_output = super(SentinelAttention, self).forward(
                 cells_with_sentinel, query)
-        weights_with_sentinel = attention_output.weights
+        # weights_with_sentinel = attention_output.weights
 
         # TODO: Bring this line in after torch v0.2.0
         # weights_without_sentinel = weights_with_sentinel[batch_size, :-1]
@@ -200,7 +202,7 @@ class SentinelAttention(Attention):
 
 
 class SoftCopyAttentionOutput(namedtuple('SoftCopyAttentionOutput',
-    ['weights', 'context', 'logits', 'orig_logits', 'boost']), NamedTupleLike):
+                                         ['weights', 'context', 'logits', 'orig_logits', 'boost']), NamedTupleLike):
     pass
     """
     Attributes:

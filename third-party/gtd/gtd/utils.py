@@ -1,8 +1,9 @@
-'''
+"""
 Created on Oct 23, 2015
 
 @author: kelvinguu
-'''
+"""
+
 import logging
 import operator
 import os.path
@@ -58,6 +59,7 @@ class FunctionWrapper(object):
 
         Args:
             instance: any object instance
+            objtype
         """
         return types.MethodType(self, instance, objtype)
 
@@ -122,7 +124,7 @@ class Memoized(FunctionWrapper):
     def _to_cache(self, key, val):
         raise NotImplementedError
 
-    @abstractproperty
+    @abstractmethod
     def cache_size(self):
         pass
 
@@ -137,7 +139,7 @@ class DictMemoized(Memoized):
         if self._custom_key_fxn:
             return self._custom_key_fxn(*args, **kwargs)
         kwargs_key = tuple(sorted(kwargs.items()))
-        return (args, kwargs_key)
+        return args, kwargs_key
 
     def clear_cache(self):
         self.cache = {}
@@ -244,6 +246,7 @@ def ensure_unicode(s):
 
 class UnicodeMixin(object):
     __slots__ = []
+
     @abstractmethod
     def __unicode__(self):
         raise NotImplementedError
@@ -252,7 +255,7 @@ class UnicodeMixin(object):
         return repr(self)
 
     def __repr__(self):
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
 
 
 class EqualityMixinSlots(object):
@@ -346,46 +349,6 @@ class Bunch(object):
 
     def __repr__(self):
         return repr(self.__dict__)
-
-
-def best_threshold(scores, labels, debug=False):
-    # find best threshold in O(nlogn)
-    # does not handle scores of infinity or -infinity
-    items = zip(scores, labels)
-    items.sort()
-    total = len(items)
-    total_pos = len([l for l in labels if l])
-
-    def accuracy(p, n):
-        correct_n = n
-        correct_p = total_pos - p
-        return float(correct_n + correct_p) / total
-
-    # predict True iff score > thresh
-    pos = 0  # no. pos <= thresh
-    neg = 0  # no. neg <= thresh
-
-    thresh_accs = [(float('-inf'), accuracy(pos, neg))]
-    for thresh, label in items:
-        if label:
-            pos += 1
-        else:
-            neg += 1
-        thresh_accs.append((thresh, accuracy(pos, neg)))
-
-    if debug:
-        import matplotlib.pyplot as plt
-        from gtd.plot import plot_pdf
-        x, y = zip(*thresh_accs)
-        plt.figure()
-        plt.plot(x, y)
-        pos_scores = [s for s, l in items if l]
-        neg_scores = [s for s, l in items if not l]
-        plot_pdf(pos_scores, 0.1, color='b')
-        plot_pdf(neg_scores, 0.1, color='r')
-        plt.show()
-
-    return max(thresh_accs, key=operator.itemgetter(1))[0]
 
 
 def as_batches(l, batch_size):
@@ -747,7 +710,7 @@ def generator_ignore_errors(iterator):
             # it will get garbage collected, and throw a GeneratorExit error
             # GeneratorExit does not inherit from Exception in Python >2.6, so we will not catch it here
             # Critically, this line should NOT be changed to just "except:", as it would catch GeneratorExit
-            logging.warn('Error parsing line {}'.format(i))
+            logging.warning('Error parsing line {}'.format(i))
         i += 1
 
 
@@ -916,6 +879,7 @@ class Config(object):
         Args:
             key (str): key to use (dot separated). E.g. `a.b.c`
             value (object): value to put
+            append (bool)
         """
         self._config_tree.put(key, value, append=append)
 
@@ -1007,33 +971,11 @@ def softmax(logits):
     return probs
 
 
-def bleu(reference, predict):
-    """Compute sentence-level bleu score.
-
-    Args:
-        reference (list[str])
-        predict (list[str])
-    """
-    from nltk.translate import bleu_score
-
-    if len(predict) == 0:
-        if len(reference) == 0:
-            return 1.0
-        else:
-            return 0.0
-
-    # TODO(kelvin): is this quite right?
-    # use a maximum of 4-grams. If 4-grams aren't present, use only lower n-grams.
-    n = min(4, len(reference), len(predict))
-    weights = tuple([1. / n] * n)  # uniform weight on n-gram precisions
-    return bleu_score.sentence_bleu([reference], predict, weights, emulate_multibleu=True)
-
-
 class ComparableMixin(object):
     __metaclass__ = ABCMeta
     __slots__ = []
 
-    @abstractproperty
+    @abstractmethod
     def _cmpkey(self):
         pass
 
@@ -1094,34 +1036,3 @@ def parallel_call(fxn, vals):
             else:
                 results.append(result)
     return results
-
-
-class ClassCounter(object):
-    """Count instances of a class."""
-    def __init__(self, cls):
-        from pympler.classtracker import ClassTracker
-        tracker = ClassTracker()
-        tracker.track_class(cls)
-        self.tracker = tracker
-
-    def count(self):
-        # take snapshot with pympler
-        self.tracker.create_snapshot()
-        stats = self.tracker.stats
-        snap = stats.snapshots[-1]
-        stats.annotate_snapshot(snap)
-
-        # get target class
-        classes = snap.classes.keys()
-
-        if len(classes) == 0:
-            return 0  # no instances of the class seen yet
-
-        if len(classes) > 1:
-            raise RuntimeError(classes)  # should be only logging one class
-
-        cls = classes[0]
-
-        # get count
-        count = snap.classes[cls]['active']
-        return count

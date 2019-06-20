@@ -131,9 +131,9 @@ def function_label(fxn):
     """
     code = fxn.__code__
     if isinstance(code, str):
-        return ('~', 0, code)  # built-in functions ('~' sorts at the end)
+        return '~', 0, code  # built-in functions ('~' sorts at the end)
     else:
-        return (code.co_filename, code.co_firstlineno, code.co_name)
+        return code.co_filename, code.co_firstlineno, code.co_name
 
 
 class ProfilerStats(Mapping):
@@ -171,23 +171,24 @@ class ProfilerStats(Mapping):
             fxns = self.keys()
 
         fxn_stats = [self[f] for f in fxns]
-        fxn_stats = sorted(fxn_stats, key=lambda stats: stats.total_time, reverse=True)
+        fxn_stats = sorted(fxn_stats, key=lambda s: s.total_time, reverse=True)
 
         for stats in fxn_stats:
-            if stats.empty: continue
+            if stats.empty:
+                continue
             print(stats)
 
 
 class FunctionStats(object):
-    def __init__(self, function, timing, unit):
+    def __init__(self, func, timing, unit):
         """Create a FunctionStats object.
 
         Args:
-            function: a Python function
+            func: a Python function
             timing (list[(int, int, int)]): a list of (lineno, nhits, total_time) tuples, one per line
             unit: unit of time (e.g. seconds)
         """
-        self._function = function
+        self._function = func
         self._timing = timing
         self._unit = unit
 
@@ -212,8 +213,10 @@ class FunctionStats(object):
         class Stream(object):
             def __init__(self):
                 self.items = []
+
             def write(self, s):
                 self.items.append(s)
+
             def get_value(self):
                 return ''.join(self.items)
 
@@ -313,5 +316,5 @@ def monitor_call_stack():
 
     faulthandler.register(signal.SIGUSR1, file=f)
     print('To monitor call stack, type this at command line: kill -USR1 {}'.format(os.getpid()))
-    print('Call stack will be printed to stderr' \
+    print('Call stack will be printed to stderr'
           '(in IPython Notebook, this will show in the terminal where you launched the notebook.)')

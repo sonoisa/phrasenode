@@ -98,6 +98,7 @@ class Checkpoints(object):
         """Load the checkpoint for a particular training step.
 
         Args:
+            train_steps
             model (Module)
             optimizer (Optimizer)
 

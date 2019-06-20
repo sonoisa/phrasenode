@@ -1,9 +1,9 @@
 """An ensemble between encoding and alignment models."""
 
 import numpy as np
+import logging
 
 import torch
-import torch.optim as optim
 from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,7 +20,7 @@ class EnsembleModel(nn.Module):
         self._weight = V(FT([1.0, 1.0]))
 
         self.node_filter = node_filter
-        self.loss = nn.CrossEntropyLoss(reduce=False)
+        self.loss = nn.CrossEntropyLoss(reduction="none")
         self.top_k = top_k
 
     def forward(self, web_page, examples):
@@ -39,19 +39,17 @@ class EnsembleModel(nn.Module):
         logits = logits + log_node_filter_mask
         # Losses and predictions
         targets = V(LT([web_page.xid_to_ref.get(x.target_xid, 0) for x in examples]))
-        mask = V(FT([int(
-                x.target_xid in web_page.xid_to_ref
-                and node_filter_mask[web_page.xid_to_ref[x.target_xid]]
-            ) for x in examples]))
+        mask = V(FT([int(x.target_xid in web_page.xid_to_ref and node_filter_mask[web_page.xid_to_ref[x.target_xid]])
+                     for x in examples]))
         losses = self.loss(logits, targets) * mask
-        #print '=' * 20, examples[0].web_page_code
-        #print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
-        #print [logits.data[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
-        #print logits, targets, mask, losses
+        # print '=' * 20, examples[0].web_page_code
+        # print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
+        # print [logits.data[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
+        # print logits, targets, mask, losses
         if not np.isfinite(losses.data.sum()):
-            #raise ValueError('Losses has NaN')
-            logging.warn('Losses has NaN')
-            #print losses
+            # raise ValueError('Losses has NaN')
+            logging.warning('Losses has NaN')
+            # print losses
         # num_phrases x top_k
         top_k = min(self.top_k, len(web_page.nodes))
         predictions = torch.topk(logits, top_k, dim=1)[1]
@@ -77,6 +75,6 @@ def get_ensemble_model(config, node_embedder):
     alignment_model = get_alignment_model(config, node_embedder)
 
     model = EnsembleModel(encoding_model, alignment_model,
-            encoding_model.node_filter, config.model.top_k,
-            )
+                          encoding_model.node_filter, config.model.top_k,
+                          )
     return model

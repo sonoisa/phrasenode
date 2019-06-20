@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 import torch
@@ -12,7 +12,7 @@ from gtd.ml.torch.seq_batch import SequenceBatchElement
 class SourceEncoder(Module):
     __metaclass__ = ABCMeta
 
-    @abstractproperty
+    @abstractmethod
     def hidden_dim(self):
         raise NotImplementedError
 

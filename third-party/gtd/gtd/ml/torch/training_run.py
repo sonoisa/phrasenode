@@ -27,7 +27,8 @@ class TorchTrainingRun(TrainingRun):
             bool
         """
         for param in parameters:
-            if param.grad is None: continue
+            if param.grad is None:
+                continue
             if not np.isfinite(param.grad.data.sum()):
                 return False
         return True
@@ -76,7 +77,7 @@ class TorchTrainingRun(TrainingRun):
             stats (dict[tuple[str], float]): a map from a stat name (expressed as a string tuple) to a float
             step (int): training step that we are on, for Tensorboard plots
         """
-        for path, val in stats.iteritems():
+        for path, val in stats.items():
             # log to TBoard
             name = '_'.join(path)
             self.tb_logger.log_value(name, val, step)

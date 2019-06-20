@@ -1,18 +1,11 @@
 """Stupid embedder. Only sum the texts."""
-import numpy as np
-import torch
-from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
-import torch.nn.functional as F
 
-from gtd.ml.torch.seq_batch import SequenceBatch
 from gtd.ml.torch.token_embedder import TokenEmbedder
-from gtd.ml.torch.utils import GPUVariable as V
 
-from phrasenode.constants import UNK, EOS, HIDDEN, TAGS, GraphRels
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder
-from phrasenode.utils import word_tokenize, word_tokenize2
-from phrasenode.vocab import GloveEmbeddings, RandomEmbeddings, read_frequency_vocab
+from phrasenode.utils import word_tokenize2
+from phrasenode.vocab import GloveEmbeddings
 
 
 class StupidEmbedder(nn.Module):

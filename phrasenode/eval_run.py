@@ -7,7 +7,7 @@ import gzip
 import json
 import logging
 import os
-from os.path import dirname, realpath, join
+from os.path import join
 
 import torch
 from gtd.ml.torch.utils import try_gpu
@@ -75,10 +75,10 @@ class PhraseNodeEvalRun(object):
 
         logits, losses, predictions = self.model(web_page, examples)
         # loss
-        averaged_loss = torch.sum(losses) / len(examples)
+        # averaged_loss = torch.sum(losses) / len(examples)
 
         stats.n = len(examples)
-        stats.loss = float(torch.sum(losses))
+        stats.loss = float(losses.sum())
         stats.logits = logits
         stats.losses = losses
         stats.predictions = predictions
@@ -131,10 +131,10 @@ class PhraseNodeEvalRun(object):
                     'str_acc': str_acc
                     })
         return {'oracle': stats.oracle,
-            'str_acc': stats.str_acc,
-            'loss': stats.loss,
-            'phrase': metadata['phrase'],
-            'preds': metadata['predictions']}
+                'str_acc': stats.str_acc,
+                'loss': stats.loss,
+                'phrase': metadata['phrase'],
+                'preds': metadata['predictions']}
 
     def _check_str(self, pred_node, target_node):
         """Check if the strings of the two nodes are identical."""

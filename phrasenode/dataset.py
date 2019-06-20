@@ -1,5 +1,7 @@
 """Loading the phrase-node dataset."""
-import sys, os, json, copy
+import os
+import json
+import copy
 
 from phrasenode.webpage import WebPage, check_web_page
 
@@ -23,7 +25,8 @@ class PhraseNodeStorage(object):
             [(version, webpage) from JSONL].
 
         Args:
-            set_names (str)
+            set_name (str)
+
         Returns:
             dict[(str, str) -> list[PhraseNodeExample]]:
                 Mapping web page code to examples with that web page
@@ -46,12 +49,12 @@ class PhraseNodeStorage(object):
             web_page_code: tuple (version (str), web_page_name (str))
             check (bool): Check if the web page is good for training
                 (using the check_web_page method)
+
         Returns:
             WebPage
         """
         version, web_page_name = web_page_code
-        filename = os.path.join(self.basedir,
-                'infos', version, 'info-' + web_page_name + '.gz')
+        filename = os.path.join(self.basedir, 'infos', version, 'info-' + web_page_name + '.gz')
         web_page = WebPage(filename)
         if check and not check_web_page(web_page):
             web_page = None

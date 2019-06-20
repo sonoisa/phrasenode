@@ -1,10 +1,5 @@
-import logging
 import os
 import re
-
-import numpy as np
-
-from phrasenode.constants import UNK
 
 
 def create_experiment_dir(outdir):
@@ -25,6 +20,7 @@ def create_experiment_dir(outdir):
 
 TOKENIZER = re.compile(r'[^\W_]+|[^\w\s-]', re.UNICODE | re.MULTILINE | re.DOTALL)
 
+
 def word_tokenize(text):
     """Tokenize without keeping the mapping to the original string.
 
@@ -34,7 +30,6 @@ def word_tokenize(text):
         list[unicode]
     """
     return TOKENIZER.findall(text)
-
 
 
 TOKENIZER2 = re.compile(r"[A-Z]{2,}(?![a-z])|[A-Z][a-z]+(?=[A-Z])|[\'\w]+", re.UNICODE | re.MULTILINE | re.DOTALL)
@@ -56,7 +51,6 @@ def word_tokenize2(text):
         list[unicode]
     """
     return [s.lower() for s in TOKENIZER2.findall(text)]
-
 
 
 ################################################
@@ -117,9 +111,9 @@ class Stats(object):
 
     def __repr__(self):
         n = max(1, self.n) * 1.
-        return '(n={}, loss={}, accuracy={}, area_f1={}, oracle={}, str_acc={}, grad_norm={})'\
-                .format(self.n, self.loss / n, self.accuracy / n, self.area_f1 / n,
-                        self.oracle / n, self.str_acc / n, self.grad_norm)
+        return '(n={}, loss={}, accuracy={}, area_f1={}, oracle={}, str_acc={}, grad_norm={})'.format(
+            self.n, self.loss / n, self.accuracy / n, self.area_f1 / n,
+            self.oracle / n, self.str_acc / n, self.grad_norm)
     __str__ = __repr__
 
     def log(self, tb_logger, step, prefix='', ignore_grad_norm=False):

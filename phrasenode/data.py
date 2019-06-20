@@ -1,5 +1,4 @@
 import os
-from os.path import join
 from gtd.io import Workspace
 
 # Set location of local data directory from environment variable

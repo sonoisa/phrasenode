@@ -1,6 +1,8 @@
 """Data storage for saved websites."""
-import sys, os, re, json, glob, gzip
-import urllib, urlparse
+import os
+import re
+import glob
+from urllib.parse import quote, unquote, urlparse
 
 from collections import namedtuple
 StoragePath = namedtuple('StoragePath', ['url', 'quoted_url', 'dirname'])
@@ -41,16 +43,16 @@ class WebPageStorage(object):
         """
         if quoted:
             quoted_url = url
-            url = urllib.unquote(url)
+            url = unquote(url)
         else:
-            quoted_url = urllib.quote(url, '')
-        hostname = urlparse.urlparse(url).hostname
+            quoted_url = quote(url, '')
+        hostname = urlparse(url).hostname
         tld = hostname.split('.')[-1]
         prefix = hostname[:1]
         if self.url_path_only:
-            path = urlparse.urlparse(url).path
+            path = urlparse(url).path
             path = re.sub('^/', '', path)
-            quoted_url = urllib.quote(path)
+            quoted_url = quote(path)
         return StoragePath(url, quoted_url, os.path.join(tld, prefix))
 
     def path_to_storage_path(self, path):

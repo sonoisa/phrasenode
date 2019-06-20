@@ -7,9 +7,10 @@ gtd naming scheme:
 """
 import logging
 import os
-from codecs import open
 
 import numpy as np
+
+from codecs import open
 
 from gtd.ml.vocab import SimpleVocab, SimpleEmbeddings
 
@@ -17,7 +18,6 @@ from phrasenode.constants import UNK, EOS
 from phrasenode import data
 
 from hashlib import md5
-
 
 
 class VocabWithUnk(SimpleVocab):
@@ -38,7 +38,6 @@ class VocabWithUnk(SimpleVocab):
             raise ValueError('EOS must be the second element of the tokens list')
         super(VocabWithUnk, self).__init__(tokens)
 
-
     def word2index(self, w):
         """Map a word to an integer.
 
@@ -49,7 +48,6 @@ class VocabWithUnk(SimpleVocab):
             return sup.word2index(w.lower())
         except KeyError:
             return sup.word2index(UNK)
-
 
 
 ##############################################################################
@@ -104,11 +102,9 @@ class VocabWithHashTrick(SimpleVocab):
             raise ValueError('EOS must be the second element of the tokens list')
         super(VocabWithHashTrick, self).__init__(tokens)
 
-
     def word2index(self, w):
         """Map a word to an integer via hashing"""
         return hashing_trick(w.lower(), self.output_dim)
-
 
 
 ################################################
@@ -122,10 +118,10 @@ def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
             and glove.6B.[dim]d.txt-vectors.npy
         vocab_size (int): Maximum vocab size (including special tokens)
         dim (int): Dimension of the GloVe vectors to load
-        special_tokens (list[unicode])
+        special_tokens (list[str])
 
     Return:
-        words (list[unicode]): list of length vocab_size
+        words (list[str]): list of length vocab_size
         embeddings (np.array): (vocab_size, dim)
     """
     filename_prefix = os.path.join(dirname, 'glove.6B.{}d.txt'.format(dim))
@@ -145,8 +141,7 @@ def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
     vectors = np.vstack([special_vectors, vectors]).astype('float32')
     assert vectors.shape[0] == len(words)
     assert vectors.shape[1] == dim
-    logging.info('Loaded %d word vectors; shape = %s',
-            len(words), str(vectors.shape))
+    logging.info('Loaded %d word vectors; shape = %s', len(words), str(vectors.shape))
     return words, vectors
 
 
@@ -160,7 +155,7 @@ class GloveEmbeddings(SimpleEmbeddings):
             dim (int)
         """
         words, vectors = read_word_vectors(data.workspace.glove,
-                vocab_size, dim, special_tokens=(UNK, EOS))
+                                           vocab_size, dim, special_tokens=[UNK, EOS])
         vocab = VocabWithHashTrick(words, vocab_size)
         # vocab = VocabWithUnk(words)
         super(GloveEmbeddings, self).__init__(vectors, vocab)

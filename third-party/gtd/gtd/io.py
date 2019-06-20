@@ -1,12 +1,8 @@
-#import cPickle as pickle
-import _pickle as cPickle
+import _pickle as pickle
 import codecs
-import contextlib
-from contextlib import contextmanager
 import gzip
 import json
 import os
-import random
 import shutil
 import subprocess
 import sys
@@ -18,11 +14,8 @@ from os.path import join
 from threading import Thread
 
 import jsonpickle
-import numpy as np
 from fabric.api import local, settings
 from fabric.context_managers import hide
-
-from gtd.utils import truncated
 
 
 class MultiStream(object):
@@ -152,41 +145,19 @@ def makedirs(directory):
         os.makedirs(directory)
 
 
-def reset_state():
-    # Reset all random seeds, as well as TensorFlow default graph
-    random.seed(0)
-    np.random.seed(0)
-    import tensorflow as tf
-    from tensorflow.python.framework import ops
-    tf.set_random_seed(0)
-    ops.reset_default_graph()
-
-
 class EmptyFile(object):
     """Delivers a never-ending stream of empty strings."""
     def __enter__(self):
         return self
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
     def __iter__(self):
         return self
+
     def next(self):
         return ''
-
-
-def read_files(*file_paths):
-    files = []
-    for i, p in enumerate(file_paths):
-        if p:
-            files.append(open(p, mode="r"))
-            print('Opened:' + p)
-        else:
-            files.append(EmptyFile())
-            print('WARNING: no path provided for file {} in list.'.format(i))
-
-    with contextlib.nested(*files) as entered_files:
-        for lines in zip(*entered_files):
-            yield lines
 
 
 class MultiFileWriter(object):
@@ -373,20 +344,6 @@ class JSONPicklable(object):
         with open(path, 'r') as f:
             d = json.load(f)
         return JSONPicklable.from_json(d)
-
-
-class InitPicklable(object):
-    def __new__(cls, *args, **kwargs):
-        obj = super(InitPicklable, cls).__new__(cls)
-        obj.__initargs = args, kwargs
-        return obj
-
-    def __getstate__(self):
-        return self.__initargs
-
-    def __setstate__(self, state):
-        args, kwargs = state
-        self.__init__(*args, **kwargs)
 
 
 def sub_dirs(root_dir):
@@ -576,28 +533,6 @@ class TmuxSessionExists(Exception):
     pass
 
 
-def tunnel(local_port, host, target, target_port, tmux_name, autossh_port=20000):
-    """Make a port on a target machine appear as if it is a port on our local machine.
-
-    Uses autossh to keep the tunnel open even with interruptions.
-    Runs autossh in a new tmux session, so that it can be monitored.
-
-    Args:
-        local_port (int): a port on this machine, e.g. 18888
-        host (str): the machine that will be used to create the SSH tunnel, e.g. `kgu@jamie.stanford.edu` or just `jamie`
-            if we have that alias configured in ~/.ssh/config.
-        target (str): the address of the target machine, e.g. `kgu@john11.stanford.edu` or just `john11`. The address
-            should be RELATIVE to the host machine.
-        target_port (int): port on the target machine, e.g. 8888
-        tmux_name (str): name of the tmux session that will be running the autossh command.
-        autossh_port (int): local port used by autossh to monitor the connection. Cannot be used by more than one
-            autossh process at a time!
-    """
-    command = "autossh -M {} -N -n -T -L {}:{}:{} {}".format(autossh_port, local_port, target, target_port, host)
-    tmux = Tmux(tmux_name)
-    tmux.run(command)
-
-
 class Workspace(object):
     """Manage paths underneath a top-level root directory.
 
@@ -651,38 +586,3 @@ class Workspace(object):
 
     def add_file(self, name, relative_path):
         self._add(name, relative_path)
-
-
-def split_path(path):
-    """Break a file path into its components.
-    
-    Args:
-        path (str): e.g. '/Users/Joe/Documents/file.txt'
-    
-    Returns:
-        elements (list[str]): e.g. ['Users', 'Joe', 'Documents', 'file.txt']
-    """
-    elements = []
-    dir_name = path
-    while True:
-        dir_name, leaf = os.path.split(dir_name)
-        if leaf:
-            elements.append(leaf)
-        else:
-            break
-    return list(reversed(elements))
-
-
-@contextmanager
-def lines_in_file(path, limit=float('inf'), desc=None, compute_total=True):
-    from gtd.chrono import verboserate
-    if compute_total:
-        total = min(num_lines(path), limit)  # compute total lines in file
-    else:
-        total = None
-    with codecs.open(path, 'r', encoding='utf-8') as lines:
-        if desc:
-            lines = verboserate(lines, desc=desc, total=total)
-        if limit:
-            lines = truncated(lines, limit)
-        yield lines

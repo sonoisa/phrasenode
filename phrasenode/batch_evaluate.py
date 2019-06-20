@@ -14,9 +14,9 @@ Output format: Copy of the dataset but with the following additional attributes:
     - Also have all additional keys provided in the input's predictions object
 """
 
-import sys, os, shutil, re, argparse, json
+import argparse
+import json
 from codecs import open
-from collections import defaultdict, Counter
 
 from tqdm import tqdm
 
@@ -27,12 +27,9 @@ from phrasenode.utils import Stats
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-g', '--good-xids',
-            help='Specify the path to good-xids to filter the candidates')
-    parser.add_argument('set_name',
-            help='Dataset set name (e.g., v3)')
-    parser.add_argument('infile',
-            help='Path to the prediction JSONL file')
+    parser.add_argument('-g', '--good-xids', help='Specify the path to good-xids to filter the candidates')
+    parser.add_argument('set_name', help='Dataset set name (e.g., v3)')
+    parser.add_argument('infile', help='Path to the prediction JSONL file')
     args = parser.parse_args()
 
     # Read the input file
@@ -92,6 +89,7 @@ def main():
             print(json.dumps(answer))
 
     print(stats)
+
 
 if __name__ == '__main__':
     main()

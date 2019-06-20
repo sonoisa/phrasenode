@@ -3,9 +3,11 @@
 Args:
     web_page (WebPage)
     web_page_code (tuple(str, str))
+
 Returns:
     list[bool] of length len(web_page.nodes)
 """
+
 import json
 import os
 from phrasenode import data
@@ -24,6 +26,7 @@ def visibility_node_filter(web_page, web_page_code):
 
 BLACKLIST = {'p', 'style', 'script', 'code', 'pre', 'small', 'center'}
 WHITELIST = {'a', 'span', 'button'}
+
 
 def baseline_node_filter(web_page, web_page_code):
     """Use the following filters:

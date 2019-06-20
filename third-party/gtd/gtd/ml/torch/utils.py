@@ -4,10 +4,12 @@ from contextlib import contextmanager
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from torch import torch
+
 try:
     from torch import _TensorBase
 except ImportError:
     from torch._C import _TensorBase
+
 from torch.autograd import Variable
 
 from gtd.utils import chunks
@@ -131,6 +133,7 @@ def print_module_parameters(m, depth=0):
 
 _GPUS_EXIST = True  # True by default
 
+
 def try_gpu(x):
     """Try to put a Variable/Tensor/Module on GPU."""
     global _GPUS_EXIST
@@ -227,6 +230,7 @@ def batch_tile(v, batch_size):
     new_dims = [batch_size]
     new_dims.extend(v.size())
     return v.unsqueeze(0).expand(new_dims)
+
 
 def isfinite(v):
     """

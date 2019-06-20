@@ -1,28 +1,22 @@
 """Richer embeddings for nodes"""
-from collections import namedtuple, defaultdict
-import random
-
-import numpy as np
 import torch
-from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
-import torch.nn.functional as F
 
-from gtd.ml.torch.seq_batch import SequenceBatch
+from torch import FloatTensor
+
 from gtd.ml.torch.token_embedder import TokenEmbedder
-from gtd.ml.torch.utils import GPUVariable as V
+from gtd.ml.torch.utils import GPUVariable
 
-from phrasenode.constants import UNK, EOS, HIDDEN, TAGS, GraphRels
+from phrasenode.constants import UNK, EOS, TAGS
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder, AttentionUtteranceEmbedder
-from phrasenode.utils import word_tokenize, word_tokenize2
+from phrasenode.utils import word_tokenize2
 from phrasenode.vocab import GloveEmbeddings, RandomEmbeddings, read_frequency_vocab
 
 
 def semantic_attrs(attrs):
-    whitelist = ['aria','tooltip','placeholder','label','title','name']
+    whitelist = ['aria', 'tooltip', 'placeholder', 'label', 'title', 'name']
     attrs = [value for key, value in attrs.items() if any(k in key.lower() for k in whitelist)]
     return ' '.join(attrs)
-
 
 
 ################################################
@@ -31,8 +25,8 @@ def semantic_attrs(attrs):
 class AllanBaseEmbedder(nn.Module):
 
     def __init__(self, dim, utterance_embedder, recursive_texts,
-            attr_embed_dim, max_attr_tokens, min_id_freq, min_class_freq, dropout,
-            ablate_text=False, ablate_attrs=False):
+                 attr_embed_dim, max_attr_tokens, min_id_freq, min_class_freq, dropout,
+                 ablate_text=False, ablate_attrs=False):
         """
         Args:
             dim (int): Target embedding dimension
@@ -62,11 +56,13 @@ class AllanBaseEmbedder(nn.Module):
         self._tag_embedder = TokenEmbedder(RandomEmbeddings(tags, attr_embed_dim))
 
         ids = read_frequency_vocab('frequent-ids', min_id_freq)
-        self._id_embedder = AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(ids, attr_embed_dim)), max_attr_tokens)
+        self._id_embedder = AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(ids, attr_embed_dim)),
+                                                     max_attr_tokens)
         # self._id_embedder = attr_embedder
 
         classes = read_frequency_vocab('frequent-classes', min_class_freq)
-        self._classes_embedder = AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(classes, attr_embed_dim)), max_attr_tokens)
+        self._classes_embedder = AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(classes, attr_embed_dim)),
+                                                          max_attr_tokens)
         # self._classes_embedder = attr_embedder
         coords_dim = 3
 
@@ -132,14 +128,14 @@ class AllanBaseEmbedder(nn.Module):
             other = [[] for node in nodes]
         other_embeddings = self._other_embedder(other)
         # num_nodes x 3
-        coords = V(FT([[node.x_ratio, node.y_ratio, float(node.visible)] for node in nodes]))
+        coords = GPUVariable(FloatTensor([[node.x_ratio, node.y_ratio, float(node.visible)] for node in nodes]))
 
         # num_nodes x dom_embed_dim
         dom_embeddings = torch.cat((text_embeddings, tag_embeddings, id_embeddings, class_embeddings, other_embeddings, coords), dim=1)
-        #dom_embeddings = text_embeddings
+        # dom_embeddings = text_embeddings
         return self.fc(dom_embeddings)
-        #return F.relu(self.fc(self.dropout(dom_embeddings)))
-        #return F.sigmoid(self.fc(dom_embeddings))
+        # return F.relu(self.fc(self.dropout(dom_embeddings)))
+        # return F.sigmoid(self.fc(dom_embeddings))
 
 
 # Node properties:
@@ -149,7 +145,6 @@ class AllanBaseEmbedder(nn.Module):
 # 'prev_sibling', 'raw_info', 'ref', 'right', 'style', 'style_overrides', 'tag',
 # 'text', 'top', 'top_level', 'top_offset', 'value', 'visible', 'visualize',
 # 'web_page', 'width', 'x_ratio', 'xid', 'y_ratio'
-
 
 
 ################################################
@@ -178,7 +173,7 @@ def get_allan_embedder(config):
     cm = config.model
     cmu = cm.utterance_embedder
     cmt = cm.node_embedder.token_embedder
-    cma = cm.node_embedder.attr_embedder
+    # cma = cm.node_embedder.attr_embedder
     cmb = cm.node_embedder.base_embedder
 
     # Token embedder
@@ -194,9 +189,8 @@ def get_allan_embedder(config):
 
     # Base node embedder
     base_embedder = AllanBaseEmbedder(cm.dim,
-            utterance_embedder, cmb.recursive_texts,
-            cmt.glove_dim, cmb.max_attr_tokens,
-            cmb.min_id_freq, cmb.min_class_freq, cm.dropout,
-            ablate_text = cm.ablate_text, ablate_attrs = cm.ablate_attrs)
+                                      utterance_embedder, cmb.recursive_texts,
+                                      cmt.glove_dim, cmb.max_attr_tokens,
+                                      cmb.min_id_freq, cmb.min_class_freq, cm.dropout,
+                                      ablate_text=cm.ablate_text, ablate_attrs=cm.ablate_attrs)
     return base_embedder
-

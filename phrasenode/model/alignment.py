@@ -1,33 +1,31 @@
 """p(node|text) prediction model based on dot product of embeddings."""
 import logging
-import math, random
-from collections import namedtuple, defaultdict
+import math
+import random
 
 import numpy as np
 
 import torch
-import torch.optim as optim
-from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
-import torch.nn.functional as F
 
+from collections import defaultdict
+from torch import LongTensor as LT, FloatTensor as FT
 from gtd.ml.torch.seq_batch import SequenceBatch
 from gtd.ml.torch.token_embedder import TokenEmbedder
 from gtd.ml.torch.utils import GPUVariable as V
-from gtd.ml.torch.utils import try_gpu
 
-from phrasenode.constants import UNK, EOS, HIDDEN, TAGS, GraphRels
+from phrasenode.constants import UNK, EOS, TAGS, GraphRels
 from phrasenode.node_filter import get_node_filter
-from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder
-from phrasenode.utils import word_tokenize, word_tokenize2
-from phrasenode.vocab import GloveEmbeddings, RandomEmbeddings, read_frequency_vocab
+from phrasenode.utils import word_tokenize2
+from phrasenode.vocab import RandomEmbeddings
 
 
 def embed_tokens(token_embedder, max_words, node_texts):
     """
     Args:
         token_embedder (TokenEmbedder)
-        words (TokenEmbedder)
+        max_words (int)
+        node_texts (List[str])
     """
     # Cut to max_words + look up indices
     texts = [text[:max_words-1] + [EOS] for text in node_texts]
@@ -42,7 +40,7 @@ def embed_tokens(token_embedder, max_words, node_texts):
 
 
 def semantic_attrs(attrs):
-    whitelist = ['aria','tooltip','placeholder','label','title','name','alt']
+    whitelist = ['aria', 'tooltip', 'placeholder', 'label', 'title', 'name', 'alt']
     attrs = [value for key, value in attrs.items() if any(k in key.lower() for k in whitelist)]
     return ' '.join(attrs)
 
@@ -50,9 +48,9 @@ def semantic_attrs(attrs):
 class AlignmentModel(nn.Module):
 
     def __init__(self, phrase_embedder, token_embedder,
-            max_words, node_filter, top_k=5, dropout=0.3,
-            ablate_text=False, ablate_attrs=False, use_neighbors=False, use_tags=False,
-            neighbor_rels=['above','left'], max_neighbors=1):
+                 max_words, node_filter, top_k=5, dropout=0.3,
+                 ablate_text=False, ablate_attrs=False, use_neighbors=False, use_tags=False,
+                 neighbor_rels=['above', 'left'], max_neighbors=1):
             # neighbor_rels=['above','below','left','right'], max_neighbors=1):
         """
         Args:
@@ -83,7 +81,8 @@ class AlignmentModel(nn.Module):
         # logits, take a linear layer down to 1 score
         # purpose: if you want to compute scores with neighbors, you can now
         # average neighbor score vectors and Linear down to 1 score
-        neighbor_score_dim = 10
+
+        # neighbor_score_dim = 10
 
         if self.use_neighbors:
             self._max_neighbors = max_neighbors
@@ -95,16 +94,17 @@ class AlignmentModel(nn.Module):
             score_dim = self.score_dim * (self.num_rels*max_neighbors + 1)
             # self.pool_neighbors = nn.MaxPool1d(pool_dim)
             self._final_neighbor_linear = nn.Linear(score_dim, 1)
-            extra_nodes = self.num_rels * max_neighbors
+            # extra_nodes = self.num_rels * max_neighbors
         else:
-            extra_nodes = 0
+            # extra_nodes = 0
+            pass
 
         self.dropout = nn.Dropout(dropout)
 
         self.token_embedder = token_embedder
         self.max_words = max_words
         self.node_filter = node_filter
-        self.loss = nn.CrossEntropyLoss(reduce=False)
+        self.loss = nn.CrossEntropyLoss(reduction="none")
         self.top_k = top_k
 
         self.use_tags = use_tags
@@ -120,12 +120,14 @@ class AlignmentModel(nn.Module):
         Args:
             web_page (WebPage): The web page of the examples
             examples (list[PhraseNodeExample]): Must be from the same web page.
+            logits_only (bool)
         Returns:
             logits (Tensor): num_phrases x num_nodes
                 Each entry (i,j) is the logit for p(node_j | phrase_i)
             losses (Tensor): num_phrases
             predictions (Tensor): num_phrases
         """
+
         def max_scorer(pairwise_scores):
             """
             Args:
@@ -133,6 +135,7 @@ class AlignmentModel(nn.Module):
             """
             scores = torch.max(pairwise_scores, dim=1)[0]
             return torch.max(scores, dim=1)[0]
+
         def cnn_scorer(pairwise_scores):
             """
             Args:
@@ -153,6 +156,7 @@ class AlignmentModel(nn.Module):
             scores = self.scorer(scores)
             scores = torch.squeeze(scores, dim=1)
             return scores
+
         def neighbor_cnn_scorer(pairwise_scores):
             """
             Args:
@@ -202,9 +206,9 @@ class AlignmentModel(nn.Module):
                 embedded_phrase_values = self.dropout(embedded_phrase.values)
 
                 # expand: num_nodes x phrase_len x embed_dim
-                batch_phrase = embedded_phrase_values.expand(len(texts),-1,-1)
+                batch_phrase = embedded_phrase_values.expand(len(texts), -1, -1)
                 # permute embedded_texts: num_nodes x embed_dim x max_text_len
-                pairwise_scores = torch.bmm(batch_phrase, embedded_texts.permute(0,2,1))
+                pairwise_scores = torch.bmm(batch_phrase, embedded_texts.permute(0, 2, 1))
 
                 # compute scores
                 scores = cnn_scorer(pairwise_scores)
@@ -218,9 +222,9 @@ class AlignmentModel(nn.Module):
                 embedded_phrase_values = self.dropout(embedded_phrase.values)
 
                 # expand: num_nodes x phrase_len x embed_dim
-                batch_phrase = embedded_phrase_values.expand(len(texts),-1,-1)
+                batch_phrase = embedded_phrase_values.expand(len(texts), -1, -1)
                 # permuted embedded_texts: num_nodes x embed_dim x max_text_len
-                pairwise_scores = torch.bmm(batch_phrase, embedded_texts.permute(0,2,1))
+                pairwise_scores = torch.bmm(batch_phrase, embedded_texts.permute(0, 2, 1))
                 node_score = neighbor_cnn_scorer(pairwise_scores)
                 intermediate_scores.append(node_score)
 
@@ -233,23 +237,21 @@ class AlignmentModel(nn.Module):
                 # get pairwise_scores for all neighbors...
                 # neighbors, rels = self._get_neighbors(web_page)
                 batch_size = len(node_score)
-                neighbor_scores = torch.index_select(node_score, 0,
-                        neighbors.view(-1))
-                neighbor_scores = neighbor_scores.view(batch_size,
-                        neighbors.shape[1], -1)
+                neighbor_scores = torch.index_select(node_score, 0, neighbors.view(-1))
+                neighbor_scores = neighbor_scores.view(batch_size, neighbors.shape[1], -1)
                 neighbor_scores = neighbor_scores * masks
 
                 if neighbor_scores.shape[1] < self.num_rels:
                     more = self.num_rels - neighbor_scores.shape[1]
                     num_nodes, _, embed_dim = neighbor_scores.shape
                     padding = V(torch.zeros(num_nodes, more, embed_dim))
-                    neighbor_scores = torch.cat((neighbor_scores,padding), dim=1)
+                    neighbor_scores = torch.cat((neighbor_scores, padding), dim=1)
                 # num_nodes x num_neighbors x intermediate_score_dim
 
                 node_score = torch.unsqueeze(node_score, dim=1)
-                scores = torch.cat((node_score,neighbor_scores), dim=1)
+                scores = torch.cat((node_score, neighbor_scores), dim=1)
 
-                scores = scores.view(node_score.shape[0],-1)
+                scores = scores.view(node_score.shape[0], -1)
                 scores = self._final_neighbor_linear(scores)
                 scores = torch.squeeze(scores, dim=1)
 
@@ -258,7 +260,7 @@ class AlignmentModel(nn.Module):
         logits = torch.cat(logits, dim=0)
 
         # Filter the candidates
-        node_filter_mask = self.node_filter(web_page, examples[0].web_page_code) # what does this do?
+        node_filter_mask = self.node_filter(web_page, examples[0].web_page_code)  # what does this do?
         log_node_filter_mask = V(FT([0. if x else -999999. for x in node_filter_mask]))
         logits = logits + log_node_filter_mask
         if logits_only:
@@ -266,19 +268,17 @@ class AlignmentModel(nn.Module):
 
         # Losses and predictions
         targets = V(LT([web_page.xid_to_ref.get(x.target_xid, 0) for x in examples]))
-        mask = V(FT([int(
-                x.target_xid in web_page.xid_to_ref
-                and node_filter_mask[web_page.xid_to_ref[x.target_xid]]
-            ) for x in examples]))
+        mask = V(FT([int(x.target_xid in web_page.xid_to_ref and node_filter_mask[web_page.xid_to_ref[x.target_xid]])
+                     for x in examples]))
         losses = self.loss(logits, targets) * mask
-        #print '=' * 20, examples[0].web_page_code
-        #print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
-        #print [logits.data[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
-        #print logits, targets, mask, losses
+        # print '=' * 20, examples[0].web_page_code
+        # print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
+        # print [logits.data[i, web_page.xid_to_ref.get(x.target_xid, 0)] for (i, x) in enumerate(examples)]
+        # print logits, targets, mask, losses
         if not np.isfinite(losses.data.sum()):
-            #raise ValueError('Losses has NaN')
+            # raise ValueError('Losses has NaN')
             logging.warn('Losses has NaN')
-            #print losses
+            # print losses
         # num_phrases x top_k
         top_k = min(self.top_k, len(web_page.nodes))
         predictions = torch.topk(logits, top_k, dim=1)[1]
@@ -296,10 +296,10 @@ class AlignmentModel(nn.Module):
             rels: SequenceBatch of shape num_nodes x ???
                 containing the relation indices
         """
-        G = web_page.graph
+        g = web_page.graph
         batch_neighbors = [[] for _ in range(len(web_page.nodes))]
         batch_rels = [[] for _ in range(len(web_page.nodes))]
-        for src, tgts in G.nodes.items():
+        for src, tgts in g.nodes.items():
             # Group by relation
             rel_to_tgts = defaultdict(list)
             for tgt, rels in tgts.items():
@@ -343,18 +343,18 @@ def get_alignment_model(config, node_embedder):
     cm = config.model
     cmu = cm.utterance_embedder
 
-    #glove_embeddings = GloveEmbeddings(cmu.vocab_size, cmu.glove_dim)
-    #token_embedder = TokenEmbedder(glove_embeddings, trainable=cmu.trainable)
+    # glove_embeddings = GloveEmbeddings(cmu.vocab_size, cmu.glove_dim)
+    # token_embedder = TokenEmbedder(glove_embeddings, trainable=cmu.trainable)
 
     phrase_embedder = node_embedder.utterance_embedder
     token_embedder = phrase_embedder.token_embedder
 
     node_filter = get_node_filter(cm.node_filter)
     model = AlignmentModel(phrase_embedder, token_embedder,
-            cmu.max_words, node_filter, cm.top_k,
-            dropout=cm.dropout,
-            ablate_text=cm.ablate_text,
-            ablate_attrs=cm.ablate_attrs,
-            use_neighbors=cm.use_neighbors,
-            use_tags=cm.use_tags)
+                           cmu.max_words, node_filter, cm.top_k,
+                           dropout=cm.dropout,
+                           ablate_text=cm.ablate_text,
+                           ablate_attrs=cm.ablate_attrs,
+                           use_neighbors=cm.use_neighbors,
+                           use_tags=cm.use_tags)
     return model

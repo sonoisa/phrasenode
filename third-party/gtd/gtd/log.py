@@ -1,22 +1,18 @@
 import json
 import logging
 import math
-import numbers
 import os
 import platform
 import resource
 import sys
 from collections import MutableMapping
 from contextlib import contextmanager
-from os.path import join
 
 from IPython.core.display import display, HTML
 from pyhocon import ConfigFactory
 from pyhocon import ConfigMissingException
 from pyhocon import ConfigTree
 from pyhocon import HOCONConverter
-
-from gtd.utils import NestedDict, Config
 
 
 def in_ipython():

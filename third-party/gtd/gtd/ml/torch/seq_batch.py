@@ -16,6 +16,7 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
         mask (Variable[FloatTensor]): of shape (batch_size, max_seq_length)
     """
     __slots__ = ()
+
     def __new__(cls, values, mask, left_justify=True):
         if not isinstance(values, Variable) or not isinstance(mask, Variable):
             raise ValueError('values and mask must both be of type Variable.')

@@ -1,13 +1,10 @@
 """Utterance embedder"""
 import torch
-from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
-import torch.nn.functional as F
 
 from gtd.ml.torch.attention import Attention
 from gtd.ml.torch.seq_batch import SequenceBatch
 from gtd.ml.torch.source_encoder import BidirectionalSourceEncoder
-from gtd.ml.torch.utils import GPUVariable as V
 
 from phrasenode.constants import EOS
 
@@ -121,7 +118,6 @@ class LSTMUtteranceEmbedder(nn.Module):
         return self._token_embedder
 
 
-
 class AttentionUtteranceEmbedder(nn.Module):
     """Takes a string, embeds the tokens using the token_embedder, and passes
     the embeddings through a biLSTM padded / masked up to sequence_length.
@@ -180,4 +176,3 @@ class AttentionUtteranceEmbedder(nn.Module):
     @property
     def token_embedder(self):
         return self._token_embedder
-

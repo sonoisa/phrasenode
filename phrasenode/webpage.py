@@ -73,8 +73,7 @@ class Node(object):
 
     def visualize(self, join=True, max_levels=10):
         """Return a string visualizing the tree structure."""
-        lines = []
-        lines.append('- {}'.format(self))
+        lines = ['- {}'.format(self)]
         if max_levels > 0:
             for i, child in enumerate(self.children):
                 for j, line in enumerate(child.visualize(
@@ -233,7 +232,7 @@ class WebPage(object):
         Return the node is successfully constructed; None otherwise.
         """
         raw_info = data[index]
-        #if not raw_info['height'] and not raw_info['width']:
+        # if not raw_info['height'] and not raw_info['width']:
         #    return
         node = Node(raw_info, self)
         ref_to_node[index] = node
@@ -313,10 +312,10 @@ class WebPage(object):
             masks (list[list[bool]]) of size len(self.nodes) x 4)
                 masks[i][j] indicates if the neighbor #j of node i is present
         """
-        G = self.graph
+        g = self.graph
         neighbors = [[0] * len(self.SPATIAL_RELATIONS) for _ in range(len(self.nodes))]
         masks = [[0] * len(self.SPATIAL_RELATIONS) for _ in range(len(self.nodes))]
-        for src, tgts in G.nodes.items():
+        for src, tgts in g.nodes.items():
             for tgt, rels in tgts.items():
                 for rel in rels:
                     if rel not in self.SPATIAL_RELATIONS:
@@ -340,14 +339,14 @@ def check_web_page(web_page, max_nodes=7000):
         boolean
     """
     if len(web_page.nodes) == 1:
-        logging.warn('%s has only 1 node; skip', web_page.filename)
+        logging.warning('%s has only 1 node; skip', web_page.filename)
         return False
     if len(web_page.nodes) > max_nodes:
-        logging.warn('%s has too many nodes (%d > %d); skip',
-                web_page.filename, len(web_page.nodes), max_nodes)
+        logging.warning('%s has too many nodes (%d > %d); skip',
+                        web_page.filename, len(web_page.nodes), max_nodes)
         return False
     if len(web_page.graph.nodes) < 2:
-        logging.warn('%s has less than 2 graph nodes; skip', web_page.filename)
+        logging.warning('%s has less than 2 graph nodes; skip', web_page.filename)
         return False
     return True
 

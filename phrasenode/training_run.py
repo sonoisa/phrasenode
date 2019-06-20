@@ -4,30 +4,27 @@
 - Train the model, with periodic evaluation.
 """
 import gzip
-import json
 import logging
-import os
-from os.path import dirname, realpath, join
 import random
-
-import numpy as np
-from tqdm import tqdm
+import json
 
 import torch
-import torch.nn as nn
 import torch.optim as optim
-from torch.nn.utils import clip_grad_norm
+
+from os.path import dirname, realpath, join
+
+from tqdm import tqdm
+
+from torch.nn.utils import clip_grad_norm_
 
 from gtd.ml.torch.training_run import TorchTrainingRun
-from gtd.ml.torch.utils import try_gpu, random_seed
+from gtd.ml.torch.utils import try_gpu
 from gtd.ml.training_run import TrainingRuns
-from gtd.utils import as_batches
 
 from phrasenode import data
 from phrasenode.dataset import PhraseNodeStorage
 from phrasenode.model import create_model
 from phrasenode.utils import Stats
-from phrasenode.webpage import WebPage, check_web_page
 
 
 class PhraseNodeTrainingRuns(TrainingRuns):
@@ -76,8 +73,8 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
         self.model = create_model(config)
         self.model = try_gpu(self.model)
         self.optimizer = optim.Adam(self.model.parameters(),
-                lr=self.config.train.learning_rate,
-                weight_decay=self.config.train.l2_reg)
+                                    lr=self.config.train.learning_rate,
+                                    weight_decay=self.config.train.l2_reg)
         self.gradient_clip = config.train.gradient_clip
 
     def load_model(self, train_steps):
@@ -100,7 +97,7 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
         clc = self.config.log.checkpoints
         checkpoint_numbers = self.checkpoints.checkpoint_numbers
         to_keep = (set(checkpoint_numbers[-clc.keep_last:]) |
-                set(x for x in checkpoint_numbers if x % clc.keep_every == 0))
+                   set(x for x in checkpoint_numbers if x % clc.keep_every == 0))
         print('Keeping checkpoints {}'.format(sorted(to_keep)))
         to_prune = [x for x in checkpoint_numbers if x not in to_keep]
         for x in to_prune:
@@ -130,7 +127,7 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                 train_iterator = iter(self._get_data_group_list(self.train_data, shuffle=True))
                 self.logfile.close()
                 self.logfile = gzip.open(
-                        join(self.workspace.logs, 'eval-pn-train.{}.gz'.format(step)), 'w')
+                        join(self.workspace.logs, 'eval-pn-train.{}.gz'.format(step)), 'wt')
                 web_page_code, examples = next(train_iterator)
 
             # Train
@@ -152,7 +149,7 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
             # Evaluate
             if step % config.timing.dev_freq == 0:
                 filename = join(self.workspace.logs, 'eval-pn-dev.{}.gz'.format(step))
-                with gzip.open(filename, 'w') as dev_logfile:
+                with gzip.open(filename, 'wt') as dev_logfile:
                     dev_stats = Stats()
                     for web_page_code, examples in tqdm(
                             self._get_data_group_list(self.dev_data),
@@ -165,7 +162,7 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
 
             if step % config.timing.test_freq == 0:
                 filename = join(self.workspace.logs, 'eval-pn-test.{}.gz'.format(step))
-                with gzip.open(filename, 'w') as test_logfile:
+                with gzip.open(filename, 'wt') as test_logfile:
                     test_stats = Stats()
                     for web_page_code, examples in tqdm(
                             self._get_data_group_list(self.test_data),
@@ -259,11 +256,11 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                         'prec': prec, 'rec': rec, 'f1': f1,
                         'str_acc': str_acc,
                         })
-                # print >> logfile, json.dumps(metadata)
+                print(json.dumps(metadata, ensure_ascii=False), file=logfile)
         # gradient
         if train and averaged_loss.requires_grad:
             averaged_loss.backward()
-            stats.grad_norm = clip_grad_norm(self.model.parameters(), self.gradient_clip)
+            stats.grad_norm = clip_grad_norm_(self.model.parameters(), self.gradient_clip)
             self.optimizer.step()
         return stats
 

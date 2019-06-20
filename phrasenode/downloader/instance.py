@@ -1,19 +1,9 @@
-import json
 import logging
 import os
-import requests
-import sys
-import time
 import traceback
-import urlparse
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 
 with open(os.path.join(os.path.dirname(__file__), 'get-dom-info.js')) as fin:
@@ -56,11 +46,12 @@ class DownloaderInstance(object):
     def initialize(self):
         options = webdriver.ChromeOptions()
         options.add_argument('disable-infobars')
-        options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36')
+        options.add_argument('user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+                             'Chrome/65.0.3325.181 Safari/537.36')
         if self.headless:
             options.add_argument('headless')
             options.add_argument('disable-gpu')
-            #options.add_argument('no-sandbox')
+            # options.add_argument('no-sandbox')
         if self.adblock:
             options.add_argument('load-extension=' + self.adblock)
         self.driver = webdriver.Chrome(chrome_options=options)

@@ -188,7 +188,8 @@ class SimpleEmbeddings(Mapping):
         with codecs.open(file_path, 'r', encoding='utf-8') as f:
             lines = verboserate(f, desc='Loading embeddings from {}'.format(file_path), total=vocab_size)
             for i, line in enumerate(lines):
-                if i == vocab_size: break
+                if i == vocab_size:
+                    break
                 tokens = line.split()
                 word, embed = tokens[0], np.array([float(tok) for tok in tokens[1:]], dtype=np.float32)
                 if len(embed) != embed_dim:
@@ -217,6 +218,7 @@ class SimpleEmbeddings(Mapping):
         The special tokens will have randomly generated embeddings.
 
         Args:
+            special_tokens
             random_seed (int)
         
         Returns:

@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, os, shutil, re, argparse, json, gzip
-import time, urllib, logging, traceback
+import os
+import argparse
+import json
+import gzip
+import time
+import traceback
 from codecs import open
-from collections import defaultdict, Counter
 
 from phrasenode.downloader.instance import DownloaderInstance
 from phrasenode.downloader.storage import WebPageStorage
@@ -32,7 +35,7 @@ def download(storage_path, instance, storage, index, args):
     print('Page opened.')
     time.sleep(args.sleep)
     if args.manual:
-        reply = (raw_input('Is the page OK? (Y/n): ').lower()[:1] != 'n')
+        reply = (input('Is the page OK? (Y/n): ').lower()[:1] != 'n')
         if not reply:
             raise RuntimeError('Not OK')
     dimensions = instance.dimensions()
@@ -73,7 +76,7 @@ def download(storage_path, instance, storage, index, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-L', '--localhost-port', type=int,
-            help='Prepend each URL with http://127.0.0.1:[localhost_port]/')
+                        help='Prepend each URL with http://127.0.0.1:[localhost_port]/')
     parser.add_argument('-s', '--start-index', type=int, default=0)
     parser.add_argument('-l', '--limit', type=int, default=100)
     parser.add_argument('-t', '--timeout', type=int, default=10)
@@ -83,22 +86,22 @@ def main():
     parser.add_argument('-H', '--headless', action='store_true')
     parser.add_argument('-S', '--screenshot', action='store_true')
     parser.add_argument('-m', '--manual', action='store_true',
-            help='Will prompt before saving the page')
+                        help='Will prompt before saving the page')
     parser.add_argument('-r', '--auto-resize', action='store_true')
     parser.add_argument('-i', '--infile',
-            help='File with URLs, one per line')
+                        help='File with URLs, one per line')
     args = parser.parse_args()
 
     if not os.path.isdir(args.outdir):
         print('Creating directory {}'.format(args.outdir))
         os.makedirs(args.outdir)
     storage = WebPageStorage(args.outdir,
-            url_path_only=bool(args.localhost_port))
+                             url_path_only=bool(args.localhost_port))
 
     instance = DownloaderInstance(
-            headless=bool(args.headless),
-            adblock=(ADBLOCK_PATH if args.adblock else None),
-            timeout=args.timeout)
+        headless=bool(args.headless),
+        adblock=(ADBLOCK_PATH if args.adblock else None),
+        timeout=args.timeout)
 
     with open(args.infile) as fin:
         for index, line in enumerate(fin):
