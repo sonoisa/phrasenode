@@ -2,10 +2,8 @@
 import torch
 import torch.nn as nn
 
-from torch import FloatTensor
-
 from gtd.ml.torch.token_embedder import TokenEmbedder
-from gtd.ml.torch.utils import GPUVariable
+from gtd.ml.torch.utils import send_to_device as V
 
 from phrasenode.constants import UNK, EOS, TAGS
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder, AttentionUtteranceEmbedder
@@ -128,7 +126,7 @@ class AllanBaseEmbedder(nn.Module):
             other = [[] for node in nodes]
         other_embeddings = self._other_embedder(other)
         # num_nodes x 3
-        coords = GPUVariable(FloatTensor([[node.x_ratio, node.y_ratio, float(node.visible)] for node in nodes]))
+        coords = V(torch.tensor([[node.x_ratio, node.y_ratio, float(node.visible)] for node in nodes], dtype=torch.float32))
 
         # num_nodes x dom_embed_dim
         dom_embeddings = torch.cat((text_embeddings, tag_embeddings, id_embeddings, class_embeddings, other_embeddings, coords), dim=1)

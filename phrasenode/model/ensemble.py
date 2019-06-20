@@ -4,11 +4,10 @@ import numpy as np
 import logging
 
 import torch
-from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
 import torch.nn.functional as F
 
-from gtd.ml.torch.utils import GPUVariable as V, isfinite
+from gtd.ml.torch.utils import send_to_device as V, isfinite
 
 
 class EnsembleModel(nn.Module):
@@ -17,7 +16,7 @@ class EnsembleModel(nn.Module):
         super(EnsembleModel, self).__init__()
         self._encoding_model = encoding_model
         self._alignment_model = alignment_model
-        self._weight = V(FT([1.0, 1.0]))
+        self._weight = V(torch.tensor([1.0, 1.0], dtype=torch.float32))
 
         self.node_filter = node_filter
         self.loss = nn.CrossEntropyLoss(reduction="none")
@@ -35,12 +34,12 @@ class EnsembleModel(nn.Module):
 
         # Filter the candidates
         node_filter_mask = self.node_filter(web_page, examples[0].web_page_code)
-        log_node_filter_mask = V(FT([0. if x else -999999. for x in node_filter_mask]))
+        log_node_filter_mask = V(torch.tensor([0. if x else -999999. for x in node_filter_mask], dtype=torch.float32))
         logits = logits + log_node_filter_mask
         # Losses and predictions
-        targets = V(LT([web_page.xid_to_ref.get(x.target_xid, 0) for x in examples]))
-        mask = V(FT([int(x.target_xid in web_page.xid_to_ref and node_filter_mask[web_page.xid_to_ref[x.target_xid]])
-                     for x in examples]))
+        targets = V(torch.tensor([web_page.xid_to_ref.get(x.target_xid, 0) for x in examples], dtype=torch.long))
+        mask = V(torch.tensor([int(x.target_xid in web_page.xid_to_ref and node_filter_mask[web_page.xid_to_ref[x.target_xid]])
+                     for x in examples], dtype=torch.float32))
         losses = self.loss(logits, targets) * mask
         # print '=' * 20, examples[0].web_page_code
         # print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]

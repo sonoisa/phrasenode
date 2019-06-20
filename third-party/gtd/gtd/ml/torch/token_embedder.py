@@ -1,5 +1,5 @@
 import torch
-from gtd.ml.torch.utils import GPUVariable
+from gtd.ml.torch.utils import send_to_device as V
 from torch.nn import Embedding, Module
 
 from gtd.ml.torch.seq_batch import SequenceBatch
@@ -72,7 +72,7 @@ class TokenEmbedder(Module):
             embeds (Variable[FloatTensor]): of shape (len(tokens), embed_dim)
         """
         vocab = self.vocab
-        indices = GPUVariable(torch.LongTensor([vocab.word2index(t) for t in tokens]))
+        indices = V(torch.tensor([vocab.word2index(t) for t in tokens], dtype=torch.long))
         return self._embedding(indices)
 
 
@@ -105,8 +105,7 @@ class TrainFlagEmbedding(Module):
                 torch.from_numpy(initial_embeddings))
             self._embedding = embedding
         else:
-            self._fixed_weight = GPUVariable(
-                torch.from_numpy(initial_embeddings))
+            self._fixed_weight = V(torch.from_numpy(initial_embeddings))
 
     @property
     def weight(self):

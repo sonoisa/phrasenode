@@ -6,21 +6,22 @@
 
 import argparse
 import datetime
-import socket
+
 from os.path import join, exists
 
 import bottle, json
-from bottle import post, request, run, response
-# Increase size to 10MB
-bottle.BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024
+from bottle import post, request, run
 
-from gtd.io import save_stdout, IntegerDirectories
+from gtd.io import IntegerDirectories
 from gtd.log import set_log_level
 from gtd.utils import Config
+from gtd.ml.torch.utils import set_default_device
 
 from phrasenode import data
 from phrasenode.eval_run import PhraseNodeEvalRun
 
+# Increase size to 10MB
+bottle.BaseRequest.MEMFILE_MAX = 10 * 1024 * 1024
 
 # CONFIGS ARE MERGED IN THE FOLLOWING ORDER:
 # 1. configs in args.config_paths, from left to right
@@ -30,10 +31,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--port', type=int, default=6006)
 parser.add_argument('-m', '--model-file', default='')
 parser.add_argument('-s', '--config-strings', action='append', default=[])
+parser.add_argument('--device', default='cpu')
 parser.add_argument('config_paths', nargs='+')
 args = parser.parse_args()
 
 set_log_level('WARNING')
+
+# set default device
+device = args.device
+set_default_device(device)
 
 # create run
 config_strings = []

@@ -1,5 +1,5 @@
 import torch
-from gtd.ml.torch.utils import GPUVariable
+from gtd.ml.torch.utils import send_to_device as V
 from torch.nn import Module
 
 from gtd.ml.torch.utils import conditional
@@ -15,7 +15,7 @@ def tile_state(h, batch_size):
     Returns:
         a Variable of shape (batch_size, hidden_dim)
     """
-    tiler = GPUVariable(torch.ones(batch_size, 1))
+    tiler = V(torch.ones(batch_size, 1))
     return torch.mm(tiler, h.unsqueeze(0))  # (batch_size, hidden_size)
 
 
@@ -43,7 +43,7 @@ class AdditionCell(Module):
 
     def __init__(self, input_dim, hidden_dim):
         super(AdditionCell, self).__init__()
-        self.W = GPUVariable(torch.eye(input_dim, hidden_dim))
+        self.W = V(torch.eye(input_dim, hidden_dim))
         # truncates input if input_dim > hidden_dim
         # pads with zeros if input_dim < hidden_dim
         self.hidden_size = hidden_dim

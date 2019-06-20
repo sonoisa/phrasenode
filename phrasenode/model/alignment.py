@@ -9,10 +9,9 @@ import torch
 import torch.nn as nn
 
 from collections import defaultdict
-from torch import LongTensor as LT, FloatTensor as FT
 from gtd.ml.torch.seq_batch import SequenceBatch
 from gtd.ml.torch.token_embedder import TokenEmbedder
-from gtd.ml.torch.utils import GPUVariable as V, isfinite
+from gtd.ml.torch.utils import send_to_device as V, isfinite
 
 from phrasenode.constants import UNK, EOS, TAGS, GraphRels
 from phrasenode.node_filter import get_node_filter
@@ -229,7 +228,7 @@ class AlignmentModel(nn.Module):
                 intermediate_scores.append(node_score)
 
             neighbors, masks = web_page.get_spatial_neighbors()
-            neighbors, masks = V(LT(neighbors)), V(FT(masks))
+            neighbors, masks = V(torch.tensor(neighbors, dtype=torch.long)), V(torch.tensor(masks, dtype=torch.float32))
             masks = masks.unsqueeze(dim=2)
 
             # each node_score tensor is parameterized by phrase
@@ -261,15 +260,15 @@ class AlignmentModel(nn.Module):
 
         # Filter the candidates
         node_filter_mask = self.node_filter(web_page, examples[0].web_page_code)  # what does this do?
-        log_node_filter_mask = V(FT([0. if x else -999999. for x in node_filter_mask]))
+        log_node_filter_mask = V(torch.tensor([0. if x else -999999. for x in node_filter_mask], dtype=torch.float32))
         logits = logits + log_node_filter_mask
         if logits_only:
             return logits
 
         # Losses and predictions
-        targets = V(LT([web_page.xid_to_ref.get(x.target_xid, 0) for x in examples]))
-        mask = V(FT([int(x.target_xid in web_page.xid_to_ref and node_filter_mask[web_page.xid_to_ref[x.target_xid]])
-                     for x in examples]))
+        targets = V(torch.tensor([web_page.xid_to_ref.get(x.target_xid, 0) for x in examples], dtype=torch.long))
+        mask = V(torch.tensor([int(x.target_xid in web_page.xid_to_ref and node_filter_mask[web_page.xid_to_ref[x.target_xid]])
+                     for x in examples], dtype=torch.float32))
         losses = self.loss(logits, targets) * mask
         # print '=' * 20, examples[0].web_page_code
         # print [node_filter_mask[web_page.xid_to_ref.get(x.target_xid, 0)] for x in examples]
@@ -324,8 +323,10 @@ class AlignmentModel(nn.Module):
             batch_mask.append([1.] * this_len + [0.] * (max_len - this_len))
             neighbors.extend([0] * (max_len - this_len))
             rels.extend([0] * (max_len - this_len))
-        return (SequenceBatch(V(LT(batch_neighbors)), V(FT(batch_mask))),
-                SequenceBatch(V(LT(batch_rels)), V(FT(batch_mask))))
+        return (SequenceBatch(V(torch.tensor(batch_neighbors, dtype=torch.long)),
+                              V(torch.tensor(batch_mask, dtype=torch.float32))),
+                SequenceBatch(V(torch.tensor(batch_rels, dtype=torch.long)),
+                              V(torch.tensor(batch_mask, dtype=torch.float32))))
 
 
 ################################################

@@ -2,9 +2,8 @@ from collections import namedtuple
 
 import numpy as np
 import torch
-from torch.autograd import Variable
 
-from gtd.ml.torch.utils import GPUVariable, conditional, is_binary
+from gtd.ml.torch.utils import send_to_device as V, conditional, is_binary
 from gtd.ml.torch.utils import expand_dims_for_broadcast, NamedTupleLike
 from gtd.ml.vocab import Vocab
 
@@ -18,8 +17,8 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
     __slots__ = ()
 
     def __new__(cls, values, mask, left_justify=True):
-        if not isinstance(values, Variable) or not isinstance(mask, Variable):
-            raise ValueError('values and mask must both be of type Variable.')
+        if not isinstance(values, torch.Tensor) or not isinstance(mask, torch.Tensor):
+            raise ValueError('values and mask must both be of type Tensor.')
 
         m = mask.detach()
 
@@ -82,7 +81,7 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
                 values[i, j] = vocab.word2index(word)
                 mask[i, j] = 1.0
 
-        return SequenceBatch(GPUVariable(torch.from_numpy(values)), GPUVariable(torch.from_numpy(mask)))
+        return SequenceBatch(V(torch.from_numpy(values)), V(torch.from_numpy(mask)))
 
     def split(self):
         """Convert SequenceBatch into a list of Variables, where each element represents one time step.
@@ -130,7 +129,7 @@ class SequenceBatch(namedtuple('SequenceBatch', ['values', 'mask']), NamedTupleL
 
     @classmethod
     def reduce_sum(cls, seq_batch):
-        weights = GPUVariable(torch.ones(*seq_batch.mask.size()))
+        weights = V(torch.ones(*seq_batch.mask.size()))
         return cls.weighted_sum(seq_batch, weights)
 
     @classmethod

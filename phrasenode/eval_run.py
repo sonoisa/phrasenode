@@ -10,7 +10,7 @@ import os
 from os.path import join
 
 import torch
-from gtd.ml.torch.utils import try_gpu
+from gtd.ml.torch.utils import get_default_device
 
 from phrasenode import data
 from phrasenode.dataset import PhraseNodeStorage
@@ -28,7 +28,7 @@ class PhraseNodeEvalRun(object):
     def _create_model(self):
         config = self.config
         self.model = create_model(config)
-        self.model = try_gpu(self.model)
+        self.model = self.model.to(get_default_device())
 
     def load_model(self, model_file):
         print('Loading from file {}'.format(model_file))

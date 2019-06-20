@@ -118,27 +118,22 @@ def print_module_parameters(m, depth=0):
         print_module_parameters(c, depth + 1)
 
 
-_GPUS_EXIST = True  # True by default
+_DEVICE = None
 
 
-def try_gpu(x):
-    """Try to put a Variable/Tensor/Module on GPU."""
-    global _GPUS_EXIST
-
-    if _GPUS_EXIST:
-        try:
-            return x.cuda()
-        except (AssertionError, RuntimeError):
-            # actually, GPUs don't exist
-            print('No GPUs detected. Sticking with CPUs.')
-            _GPUS_EXIST = False
-            return x
-    else:
-        return x
+def set_default_device(device):
+    global _DEVICE
+    _DEVICE = device
 
 
-def GPUVariable(data):
-    return try_gpu(Variable(data, requires_grad=False))
+def get_default_device():
+    global _DEVICE
+    return _DEVICE
+
+
+def send_to_device(data):
+    global _DEVICE
+    return data.to(_DEVICE)
 
 
 class RandomState(object):

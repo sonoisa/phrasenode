@@ -3,7 +3,7 @@ from collections import namedtuple
 import math
 import torch
 
-from gtd.ml.torch.utils import GPUVariable, isfinite
+from gtd.ml.torch.utils import send_to_device as V, isfinite
 from torch.nn import Parameter
 from torch.nn import Softmax, Tanh, Module
 
@@ -31,9 +31,9 @@ class DummyAttention(Module):
 
     def forward(self, memory_cells, query):
         batch_size, num_cells = memory_cells.mask.size()
-        logits = GPUVariable(torch.zeros(batch_size, num_cells))
-        weights = GPUVariable(torch.zeros(batch_size, num_cells))
-        context = GPUVariable(torch.zeros(batch_size, self.memory_dim))
+        logits = V(torch.zeros(batch_size, num_cells))
+        weights = V(torch.zeros(batch_size, num_cells))
+        context = V(torch.zeros(batch_size, self.memory_dim))
         return AttentionOutput(weights=weights, context=context, logits=logits)
 
 
@@ -118,7 +118,7 @@ class Attention(Module):
     @classmethod
     def _mask_logits(cls, logits, mask):
         no_cells = cls._no_cells(mask)  # (batch_size, num_cells)
-        suppress = GPUVariable(torch.zeros(*mask.size()))
+        suppress = V(torch.zeros(*mask.size()))
 
         # send the logit of non-cells to -infinity
         suppress[mask == 0] = float('-inf')
@@ -133,7 +133,7 @@ class Attention(Module):
     def _mask_weights(cls, weights, mask):
         # if a given row has no memory cells, weights should be all zeros
         no_cells = cls._no_cells(mask)
-        all_zeros = GPUVariable(torch.zeros(*mask.size()))
+        all_zeros = V(torch.zeros(*mask.size()))
         weights = conditional(no_cells, all_zeros, weights)
         return weights
 
@@ -180,7 +180,7 @@ class SentinelAttention(Attention):
         batch_size, _, cell_dim = memory_cells.values.size()
         sentinel = self._sentinel_embed.expand(
                 batch_size, 1, cell_dim)
-        sentinel_mask = GPUVariable(torch.ones(batch_size, 1))
+        sentinel_mask = V(torch.ones(batch_size, 1))
 
         cell_values_with_sentinel = torch.cat(
             [memory_cells.values, sentinel], 1)

@@ -3,13 +3,12 @@ from collections import defaultdict
 import random
 
 import torch
-from torch import LongTensor as LT, FloatTensor as FT
 import torch.nn as nn
 import torch.nn.functional as F
 
 from gtd.ml.torch.seq_batch import SequenceBatch
 from gtd.ml.torch.token_embedder import TokenEmbedder
-from gtd.ml.torch.utils import GPUVariable as V
+from gtd.ml.torch.utils import send_to_device as V
 
 from phrasenode.constants import UNK, EOS, TAGS, GraphRels
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder, AttentionUtteranceEmbedder
@@ -98,7 +97,7 @@ class ProppyBaseEmbedder(nn.Module):
         class_embeddings = self._classes_embedder(
                 [word_tokenize(' '.join(node.classes)) for node in nodes])
         # num_nodes x 3
-        coords = V(FT([[elem.x_ratio, elem.y_ratio, float(elem.visible)] for elem in nodes]))
+        coords = V(torch.tensor([[elem.x_ratio, elem.y_ratio, float(elem.visible)] for elem in nodes], dtype=torch.float32))
 
         # num_nodes x dom_embed_dim
         dom_embeddings = torch.cat(
@@ -209,8 +208,10 @@ class ProppyEmbedder(nn.Module):
             batch_mask.append([1.] * this_len + [0.] * (max_len - this_len))
             neighbors.extend([0] * (max_len - this_len))
             rels.extend([0] * (max_len - this_len))
-        return (SequenceBatch(V(LT(batch_neighbors)), V(FT(batch_mask))),
-                SequenceBatch(V(LT(batch_rels)), V(FT(batch_mask))))
+        return (SequenceBatch(V(torch.tensor(batch_neighbors, dtype=torch.long)),
+                              V(torch.tensor(batch_mask, dtype=torch.float32))),
+                SequenceBatch(V(torch.tensor(batch_rels, dtype=torch.long)),
+                              V(torch.tensor(batch_mask, dtype=torch.float32))))
 
 
 ################################################

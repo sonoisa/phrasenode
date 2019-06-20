@@ -5,7 +5,6 @@ import sys
 import argparse
 import random
 import socket
-from os.path import join
 
 import numpy as np
 import torch
@@ -13,6 +12,7 @@ import torch
 from gtd.io import save_stdout
 from gtd.log import set_log_level
 from gtd.utils import Config
+from gtd.ml.torch.utils import set_default_device
 
 from phrasenode.training_run import PhraseNodeTrainingRuns
 
@@ -29,6 +29,7 @@ parser.add_argument('-d', '--description', default='None.')
 parser.add_argument('-n', '--name', default='unnamed')
 parser.add_argument('-c', '--comment')
 parser.add_argument('-r', '--seed', default=0)
+parser.add_argument('--device', default='cpu')
 parser.add_argument('config_paths', nargs='+')
 args = parser.parse_args()
 
@@ -37,6 +38,10 @@ set_log_level('WARNING')
 random.seed(args.seed)
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
+
+# set default device
+device = args.device
+set_default_device(device)
 
 # create run
 runs = PhraseNodeTrainingRuns(check_commit=(args.check_commit == 'strict'))
