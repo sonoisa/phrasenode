@@ -5,6 +5,10 @@
 Due to its large size, the data is hosted outside Github:
 <https://nlp.stanford.edu/projects/phrasenode/>
 
+## GloVe
+
+[Magnitude](https://github.com/plasticityai/magnitude) formatted GloVe model: http://magnitude.plasticity.ai/glove/medium/glove.6B.100d.magnitude
+
 ## Setup
 
 Note that the code requires Python 3.6.

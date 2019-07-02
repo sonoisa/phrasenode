@@ -18,6 +18,7 @@ from phrasenode.constants import UNK, EOS
 from phrasenode import data
 
 from hashlib import md5
+from pymagnitude import Magnitude
 
 
 class VocabWithUnk(SimpleVocab):
@@ -111,11 +112,11 @@ class VocabWithHashTrick(SimpleVocab):
 # Glove: Load pre-trained GloVe embedding from a file.
 
 def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
-    """Read word vectors from [dirname]/glove.6B.[dim]d.txt
+    """Read word vectors from [dirname]/glove.6B.[dim]d.magnitude
 
     Args:
         dirname (str): Directory containing glove.6B.[dim]d.txt-vocab.txt
-            and glove.6B.[dim]d.txt-vectors.npy
+            and glove.6B.[dim]d.magnitude
         vocab_size (int): Maximum vocab size (including special tokens)
         dim (int): Dimension of the GloVe vectors to load
         special_tokens (list[str])
@@ -124,16 +125,17 @@ def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
         words (list[str]): list of length vocab_size
         embeddings (np.array): (vocab_size, dim)
     """
-    filename_prefix = os.path.join(dirname, 'glove.6B.{}d.txt'.format(dim))
-    logging.info('Loading word vectors from %s', filename_prefix)
+    magnitude_filename = os.path.join(dirname, 'glove.6B.{}d.magnitude'.format(dim))
+    vocab_filename = os.path.join(dirname, 'glove.6B.{}d.txt-vocab.txt'.format(dim))
+    logging.info('Loading word vectors from %s', magnitude_filename)
     words = [x for x in special_tokens]
-    with open(filename_prefix + '-vocab.txt', 'r', 'utf8') as fin:
+    with open(vocab_filename, 'r', 'utf8') as fin:
         for line in fin:
             words.append(line.strip())
             if len(words) == vocab_size:
                 break
-    vectors = np.load(filename_prefix + '-vectors.npy')
-    vectors = vectors[:(vocab_size - len(special_tokens))]
+    magnitude = Magnitude(magnitude_filename)
+    vectors = magnitude.query(words[len(special_tokens):])
     # special vectors for UNK
     special_vectors = np.random.normal(size=(len(special_tokens), dim))
     special_vectors /= np.linalg.norm(special_vectors, ord=2, axis=1, keepdims=True)
@@ -148,7 +150,7 @@ def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
 class GloveEmbeddings(SimpleEmbeddings):
 
     def __init__(self, vocab_size, dim):
-        """Read word vectors from [data.workspace.glove]/glove.6B.[dim]d.txt
+        """Read word vectors from [data.workspace.glove]/glove.6B.[dim]d.magnitude
 
         Args:
             vocab_size (int)

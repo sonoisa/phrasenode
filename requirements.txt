@@ -13,3 +13,4 @@ fabric3
 pyhocon
 GitPython
 bottle
+pymagnitude
