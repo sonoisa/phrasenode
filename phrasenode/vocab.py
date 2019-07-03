@@ -127,11 +127,17 @@ def read_magnitude_vectors(magnitude_filepath, vocab_filepath, vocab_size, dim, 
     """
     logging.info('Loading word vectors from %s', magnitude_filepath)
     words = [x for x in special_tokens]
+    word_set = set()
     with open(vocab_filepath, 'r', 'utf8') as fin:
         for line in fin:
-            words.append(line.strip())
-            if len(words) == vocab_size:
-                break
+            word = line.strip().split("\t")[0]
+            if word in word_set:
+                logging.warning("token must be unique. non-unique token='{}'".format(word))
+            elif len(word) > 0:
+                word_set.add(word)
+                words.append(word)
+                if len(words) == vocab_size:
+                    break
     magnitude = Magnitude(magnitude_filepath, case_insensitive=True, normalized=True)
     vectors = magnitude.query(words[len(special_tokens):])
     # special vectors for UNK

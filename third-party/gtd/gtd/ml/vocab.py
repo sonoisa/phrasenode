@@ -38,10 +38,12 @@ class SimpleVocab(Vocab, EqualityMixin):
         # build mapping
         word2index = {}
         for i, tok in enumerate(tokens):
+            if tok in word2index:
+                print('tokens must be unique. token={}'.format(tok))
             word2index[tok] = i
 
         if len(tokens) != len(word2index):
-            raise ValueError('tokens must be unique')
+            raise ValueError('tokens must be unique. #tokens={}, #word2index={}'.format(len(tokens), len(word2index)))
 
         self._index2word = list(tokens)  # make a copy
         self._word2index = word2index

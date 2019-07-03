@@ -55,12 +55,12 @@ class AllanBaseEmbedder(nn.Module):
 
         ids = read_frequency_vocab('frequent-ids', min_id_freq)
         self._id_embedder = AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(ids, attr_embed_dim)),
-                                                     max_attr_tokens)
+                                                     max_attr_tokens, lang="en")
         # self._id_embedder = attr_embedder
 
         classes = read_frequency_vocab('frequent-classes', min_class_freq)
         self._classes_embedder = AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(classes, attr_embed_dim)),
-                                                          max_attr_tokens)
+                                                          max_attr_tokens, lang="en")
         # self._classes_embedder = attr_embedder
         coords_dim = 3
 
@@ -155,14 +155,14 @@ class AllanBaseEmbedder(nn.Module):
 ################################################
 # Final model
 
-def make_embedder(token_embedder, config):
+def make_embedder(token_embedder, config, lang):
     # Attribute embedder
     if config.type == 'average':
-        return AverageUtteranceEmbedder(token_embedder, config.max_words)
+        return AverageUtteranceEmbedder(token_embedder, config.max_words, lang)
     elif config.type == 'lstm':
-        return LSTMUtteranceEmbedder(token_embedder, config.lstm_dim, config.max_words)
+        return LSTMUtteranceEmbedder(token_embedder, config.lstm_dim, config.max_words, lang)
     elif config.type == 'attention_lstm':
-        return AttentionUtteranceEmbedder(token_embedder, config.lstm_dim, config.max_words)
+        return AttentionUtteranceEmbedder(token_embedder, config.lstm_dim, config.max_words, lang)
     else:
         raise ValueError('Unknown AttributeEmbedder type {}'.format(config.type))
 
@@ -187,8 +187,9 @@ def get_allan_embedder(config):
     word_embeddings = MagnitudeEmbeddings(magnitude_filename, vocab_filename, cmt.vocab_size, cmt.word_embed_dim)
     token_embedder = TokenEmbedder(word_embeddings, trainable=cmt.trainable)
 
+    lang = cmt.lang
     # Utterance embedder
-    utterance_embedder = make_embedder(token_embedder, cmu)
+    utterance_embedder = make_embedder(token_embedder, cmu, lang)
 
     # Attribute embedder
     # attr_embedder = make_embedder(attr_token_embedder, cma)

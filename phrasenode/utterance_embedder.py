@@ -13,6 +13,10 @@ from phrasenode.constants import EOS
 ################################################
 # Tokenization
 
+def whitespace_splitter(text):
+    return text.split(" ")
+
+
 TOKENIZER = re.compile(r'[^\W_]+|[^\w\s-]', re.UNICODE | re.MULTILINE | re.DOTALL)
 
 
@@ -48,6 +52,15 @@ def word_tokenize2(text):
     return [s.lower() for s in TOKENIZER2.findall(text)]
 
 
+def get_tokenizer(lang):
+    if lang == "en":
+        return word_tokenize2
+    elif lang == "ja":
+        return whitespace_splitter
+    else:
+        raise ValueError("Illegal language type '{}'".format(lang))
+
+
 ################################################
 # Utterance Embedder
 
@@ -56,17 +69,19 @@ class AverageUtteranceEmbedder(nn.Module):
     and return the average of the results.
     """
 
-    def __init__(self, token_embedder, max_words):
+    def __init__(self, token_embedder, max_words, lang="en"):
         """Initialize
 
         Args:
             token_embedder (TokenEmbedder): used to embed each token
             max_words (int): maximum number of words to embed
+            lang (str): language type
         """
         super(AverageUtteranceEmbedder, self).__init__()
         self._token_embedder = token_embedder
         self._embed_dim = token_embedder.embed_dim
         self._max_words = max_words
+        self.tokenize = get_tokenizer(lang)
 
     def forward(self, utterances):
         """Embeds an utterances.
@@ -100,9 +115,6 @@ class AverageUtteranceEmbedder(nn.Module):
     def token_embedder(self):
         return self._token_embedder
 
-    def tokenize(self, text):
-        return word_tokenize2(text)
-
 
 class LSTMUtteranceEmbedder(nn.Module):
     """Takes a string, embeds the tokens using the token_embedder, and passes
@@ -110,13 +122,14 @@ class LSTMUtteranceEmbedder(nn.Module):
     Returns the concatenation of the two front and end hidden states.
     """
 
-    def __init__(self, token_embedder, lstm_dim, max_words):
+    def __init__(self, token_embedder, lstm_dim, max_words, lang="en"):
         """Initialize
 
         Args:
             token_embedder (TokenEmbedder): used to embed each token
             lstm_dim (int): output dim of the lstm
             max_words (int): maximum number of words to embed
+            lang (str): language type
         """
         super(LSTMUtteranceEmbedder, self).__init__()
         self._token_embedder = token_embedder
@@ -124,6 +137,7 @@ class LSTMUtteranceEmbedder(nn.Module):
                token_embedder.embed_dim, lstm_dim, nn.LSTMCell)
         self._embed_dim = lstm_dim
         self._max_words = max_words
+        self.tokenize = get_tokenizer(lang)
 
     def forward(self, utterances):
         """Embeds a batch of utterances.
@@ -158,9 +172,6 @@ class LSTMUtteranceEmbedder(nn.Module):
     def token_embedder(self):
         return self._token_embedder
 
-    def tokenize(self, text):
-        return word_tokenize2(text)
-
 
 class AttentionUtteranceEmbedder(nn.Module):
     """Takes a string, embeds the tokens using the token_embedder, and passes
@@ -168,13 +179,14 @@ class AttentionUtteranceEmbedder(nn.Module):
     Returns the concatenation of the two front and end hidden states.
     """
 
-    def __init__(self, token_embedder, lstm_dim, max_words):
+    def __init__(self, token_embedder, lstm_dim, max_words, lang="en"):
         """Initialize
 
         Args:
             token_embedder (TokenEmbedder): used to embed each token
             lstm_dim (int): output dim of the lstm
             max_words (int): maximum number of words to embed
+            lang (str): language type
         """
         super(AttentionUtteranceEmbedder, self).__init__()
         self._token_embedder = token_embedder
@@ -184,6 +196,7 @@ class AttentionUtteranceEmbedder(nn.Module):
         self._max_words = max_words
 
         self._attention = Attention(token_embedder.embed_dim, lstm_dim, lstm_dim)
+        self.tokenize = get_tokenizer(lang)
 
     def forward(self, utterances):
         """Embeds a batch of utterances.
@@ -220,6 +233,3 @@ class AttentionUtteranceEmbedder(nn.Module):
     @property
     def token_embedder(self):
         return self._token_embedder
-
-    def tokenize(self, text):
-        return word_tokenize2(text)
