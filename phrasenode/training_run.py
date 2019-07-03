@@ -151,11 +151,12 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                 filename = join(self.workspace.logs, 'eval-pn-dev.{}.gz'.format(step))
                 with gzip.open(filename, 'wt') as dev_logfile:
                     dev_stats = Stats()
-                    for web_page_code, examples in tqdm(
-                            self._get_data_group_list(self.dev_data),
-                            desc='Evaluate on dev set'):
+                    # for web_page_code, examples in tqdm(
+                    #         self._get_data_group_list(self.dev_data),
+                    #         desc='Evaluate on dev set'):
+                    for web_page_code, examples in self._get_data_group_list(self.dev_data):
                         ex_stats = self._process_examples(
-                                web_page_code, examples, train=False, logfile=dev_logfile)
+                            web_page_code, examples, train=False, logfile=dev_logfile)
                         dev_stats.add(ex_stats)
                     print('DEV @ {}: {}'.format(step, dev_stats))
                     dev_stats.log(self.tb_logger, step, 'pn_dev_', ignore_grad_norm=True)
@@ -164,11 +165,13 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                 filename = join(self.workspace.logs, 'eval-pn-test.{}.gz'.format(step))
                 with gzip.open(filename, 'wt') as test_logfile:
                     test_stats = Stats()
-                    for web_page_code, examples in tqdm(
-                            self._get_data_group_list(self.test_data),
-                            desc='Evaluate on test set'):
+                    # for web_page_code, examples in tqdm(
+                    #         self._get_data_group_list(self.test_data),
+                    #         desc='Evaluate on test set'):
+                    print('Evaluate on test set')
+                    for web_page_code, examples in self._get_data_group_list(self.test_data):
                         ex_stats = self._process_examples(
-                                web_page_code, examples, train=False, logfile=test_logfile)
+                            web_page_code, examples, train=False, logfile=test_logfile)
                         test_stats.add(ex_stats)
                     print('TEST @ {}: {}'.format(step, test_stats))
                     test_stats.log(self.tb_logger, step, 'pn_test_', ignore_grad_norm=True)
