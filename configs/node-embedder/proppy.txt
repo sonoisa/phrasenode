@@ -1,6 +1,14 @@
 model {
   node_embedder {
     name = proppy
+    token_embedder {
+      lang = en
+      magnitude_filename = glove.6B.100d.magnitude
+      vocab_filename = glove.6B.100d.txt-vocab.txt
+      vocab_size = 100000
+      word_embed_dim = 100
+      trainable = true
+    }
     base_embedder {
       recursive_texts = True
       attr_embed_dim = 100

@@ -9,7 +9,7 @@ root = os.environ[env_var]
 
 # define workspace
 workspace = Workspace(root)
-workspace.add_dir("glove", "glove")
 workspace.add_dir("vocab", "vocab")
 workspace.add_dir("experiments", "experiments")
 workspace.add_dir("phrase_node", "phrase-node-dataset")
+workspace.add_dir("word_embeddings", "word_embeddings")

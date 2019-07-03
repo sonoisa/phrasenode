@@ -344,9 +344,6 @@ def get_alignment_model(config, node_embedder):
     cm = config.model
     cmu = cm.utterance_embedder
 
-    # glove_embeddings = GloveEmbeddings(cmu.vocab_size, cmu.glove_dim)
-    # token_embedder = TokenEmbedder(glove_embeddings, trainable=cmu.trainable)
-
     phrase_embedder = node_embedder.utterance_embedder
     token_embedder = phrase_embedder.token_embedder
 

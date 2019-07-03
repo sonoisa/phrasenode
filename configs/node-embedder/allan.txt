@@ -2,9 +2,11 @@ model {
   node_embedder {
     name = allan
     token_embedder {
-      type = glove
+      lang = en
+      magnitude_filename = glove.6B.100d.magnitude
+      vocab_filename = glove.6B.100d.txt-vocab.txt
       vocab_size = 100000
-      glove_dim = 100
+      word_embed_dim = 100
       trainable = true
     }
     attr_embedder {

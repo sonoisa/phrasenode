@@ -72,12 +72,11 @@ class AverageUtteranceEmbedder(nn.Module):
         """Embeds an utterances.
 
         Args:
-            utterances (list[list[unicode]]): list[unicode] is a list of tokens
-            forming a sentence. list[list[unicode]] is batch of sentences.
+            utterances (list[list[str]]): list[str] is a list of tokens
+            forming a sentence. list[list[str]] is batch of sentences.
 
         Returns:
-            Variable[FloatTensor]: batch x glove_dim
-                (average of glove vectors)
+            Tensor: batch x word_embed_dim (average of word vectors)
         """
         # Cut to max_words + look up indices
         utterances = [utterance[:self._max_words] + [EOS] for utterance in utterances]

@@ -7,7 +7,7 @@ from gtd.ml.torch.utils import send_to_device as V
 
 from phrasenode.constants import UNK, EOS, TAGS
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder, AttentionUtteranceEmbedder
-from phrasenode.vocab import GloveEmbeddings, RandomEmbeddings, read_frequency_vocab
+from phrasenode.vocab import MagnitudeEmbeddings, RandomEmbeddings, read_frequency_vocab
 
 
 def semantic_attrs(attrs):
@@ -182,8 +182,10 @@ def get_allan_embedder(config):
     cmb = cm.node_embedder.base_embedder
 
     # Token embedder
-    glove_embeddings = GloveEmbeddings(cmt.vocab_size, cmt.glove_dim)
-    token_embedder = TokenEmbedder(glove_embeddings, trainable=cmt.trainable)
+    magnitude_filename = cmt.magnitude_filename
+    vocab_filename = cmt.vocab_filename
+    word_embeddings = MagnitudeEmbeddings(magnitude_filename, vocab_filename, cmt.vocab_size, cmt.word_embed_dim)
+    token_embedder = TokenEmbedder(word_embeddings, trainable=cmt.trainable)
 
     # Utterance embedder
     utterance_embedder = make_embedder(token_embedder, cmu)
@@ -196,7 +198,7 @@ def get_allan_embedder(config):
     # Base node embedder
     base_embedder = AllanBaseEmbedder(cm.dim,
                                       utterance_embedder, attr_embedder, cmb.recursive_texts,
-                                      cmt.glove_dim, cmb.max_attr_tokens,
+                                      cmt.word_embed_dim, cmb.max_attr_tokens,
                                       cmb.min_id_freq, cmb.min_class_freq, cm.dropout,
                                       ablate_text=cm.ablate_text, ablate_attrs=cm.ablate_attrs)
     return base_embedder

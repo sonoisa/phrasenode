@@ -4,7 +4,7 @@ import torch.nn as nn
 from gtd.ml.torch.token_embedder import TokenEmbedder
 
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder
-from phrasenode.vocab import GloveEmbeddings
+from phrasenode.vocab import MagnitudeEmbeddings
 
 
 class StupidEmbedder(nn.Module):
@@ -65,9 +65,14 @@ def get_stupid_embedder(config):
     """
     cm = config.model
     cmu = cm.utterance_embedder
+    cmt = cm.node_embedder.token_embedder
+
     # Token embedder
-    glove_embeddings = GloveEmbeddings(cmu.vocab_size, cmu.glove_dim)
-    token_embedder = TokenEmbedder(glove_embeddings, trainable=cmu.trainable)
+    magnitude_filename = cmt.magnitude_filename
+    vocab_filename = cmt.vocab_filename
+    word_embeddings = MagnitudeEmbeddings(magnitude_filename, vocab_filename, cmt.vocab_size, cmt.word_embed_dim)
+    token_embedder = TokenEmbedder(word_embeddings, trainable=cmu.trainable)
+
     # Utterance embedder
     if cmu.type == 'average':
         utterance_embedder = AverageUtteranceEmbedder(token_embedder, cmu.max_words)

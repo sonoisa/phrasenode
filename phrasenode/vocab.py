@@ -109,32 +109,30 @@ class VocabWithHashTrick(SimpleVocab):
 
 
 ################################################
-# Glove: Load pre-trained GloVe embedding from a file.
+# Load pre-trained word embedding from a file.
 
-def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
-    """Read word vectors from [dirname]/glove.6B.[dim]d.magnitude
+def read_magnitude_vectors(magnitude_filepath, vocab_filepath, vocab_size, dim, special_tokens=[UNK]):
+    """Read word vectors from *.magnitude
 
     Args:
-        dirname (str): Directory containing glove.6B.[dim]d.txt-vocab.txt
-            and glove.6B.[dim]d.magnitude
+        magnitude_filepath (str): magnituide file path
+        vocab_filepath (str): vocabulary file path
         vocab_size (int): Maximum vocab size (including special tokens)
-        dim (int): Dimension of the GloVe vectors to load
+        dim (int): Dimension of the word vectors to load
         special_tokens (list[str])
 
     Return:
         words (list[str]): list of length vocab_size
         embeddings (np.array): (vocab_size, dim)
     """
-    magnitude_filename = os.path.join(dirname, 'glove.6B.{}d.magnitude'.format(dim))
-    vocab_filename = os.path.join(dirname, 'glove.6B.{}d.txt-vocab.txt'.format(dim))
-    logging.info('Loading word vectors from %s', magnitude_filename)
+    logging.info('Loading word vectors from %s', magnitude_filepath)
     words = [x for x in special_tokens]
-    with open(vocab_filename, 'r', 'utf8') as fin:
+    with open(vocab_filepath, 'r', 'utf8') as fin:
         for line in fin:
             words.append(line.strip())
             if len(words) == vocab_size:
                 break
-    magnitude = Magnitude(magnitude_filename)
+    magnitude = Magnitude(magnitude_filepath, case_insensitive=True, normalized=True)
     vectors = magnitude.query(words[len(special_tokens):])
     # special vectors for UNK
     special_vectors = np.random.normal(size=(len(special_tokens), dim))
@@ -147,20 +145,25 @@ def read_word_vectors(dirname, vocab_size, dim, special_tokens=[UNK]):
     return words, vectors
 
 
-class GloveEmbeddings(SimpleEmbeddings):
+class MagnitudeEmbeddings(SimpleEmbeddings):
 
-    def __init__(self, vocab_size, dim):
-        """Read word vectors from [data.workspace.glove]/glove.6B.[dim]d.magnitude
+    def __init__(self, magnitude_filename, vocab_filename, vocab_size, dim):
+        """Read word vectors from [data.workspace.word_embeddings]/*.magnitude
 
         Args:
+            magnitude_filename (str): magnituide file name
+            vocab_filename (str): vocabulary file name
             vocab_size (int)
             dim (int)
         """
-        words, vectors = read_word_vectors(data.workspace.glove,
-                                           vocab_size, dim, special_tokens=[UNK, EOS])
+        dirname = data.workspace.word_embeddings
+        magnitude_filepath = os.path.join(dirname, magnitude_filename.format(dim))
+        vocab_filepath = os.path.join(dirname, vocab_filename.format(dim))
+        words, vectors = read_magnitude_vectors(magnitude_filepath, vocab_filepath,
+                                                vocab_size, dim, special_tokens=[UNK, EOS])
         vocab = VocabWithHashTrick(words, vocab_size)
         # vocab = VocabWithUnk(words)
-        super(GloveEmbeddings, self).__init__(vectors, vocab)
+        super(MagnitudeEmbeddings, self).__init__(vectors, vocab)
 
 
 ################################################
