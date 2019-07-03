@@ -12,7 +12,6 @@ from gtd.ml.torch.utils import send_to_device as V
 
 from phrasenode.constants import UNK, EOS, TAGS, GraphRels
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder, AttentionUtteranceEmbedder
-from phrasenode.utils import word_tokenize
 from phrasenode.vocab import GloveEmbeddings, RandomEmbeddings, read_frequency_vocab
 
 
@@ -79,23 +78,29 @@ class ProppyBaseEmbedder(nn.Module):
             embeddings (Tensor): num_nodes x embed_dim
         """
         texts = []
+        utterance_embedder = self._utterance_embedder
         for node in nodes:
             if self._recursive_texts:
                 text = ' '.join(node.all_texts(max_words=self._max_words))
             else:
                 text = node.text or ''
-            texts.append(word_tokenize(text.lower()))
+            texts.append(utterance_embedder.tokenize(text.lower()))
         text_embeddings = self._utterance_embedder(texts)
 
         # num_nodes x attr_embed_dim
         tag_embeddings = self._tag_embedder.embed_tokens(
                 [node.tag for node in nodes])
+
         # num_nodes x attr_embed_dim
+        id_embedder = self._id_embedder
         id_embeddings = self._id_embedder(
-                [word_tokenize(node.id_) for node in nodes])
+                [id_embedder.tokenize(node.id_) for node in nodes])
+
         # num_nodes x attr_embed_dim
+        classes_embedder = self._classes_embedder
         class_embeddings = self._classes_embedder(
-                [word_tokenize(' '.join(node.classes)) for node in nodes])
+                [classes_embedder.tokenize(' '.join(node.classes)) for node in nodes])
+
         # num_nodes x 3
         coords = V(torch.tensor([[elem.x_ratio, elem.y_ratio, float(elem.visible)] for elem in nodes], dtype=torch.float32))
 

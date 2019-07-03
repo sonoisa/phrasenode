@@ -7,7 +7,6 @@ from gtd.ml.torch.utils import send_to_device as V
 
 from phrasenode.constants import UNK, EOS, TAGS
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder, AttentionUtteranceEmbedder
-from phrasenode.utils import word_tokenize2
 from phrasenode.vocab import GloveEmbeddings, RandomEmbeddings, read_frequency_vocab
 
 
@@ -94,38 +93,45 @@ class AllanBaseEmbedder(nn.Module):
             embeddings (Tensor): num_nodes x embed_dim
         """
         texts = []
+        utterance_embedder = self._utterance_embedder
         for node in nodes:
             if not self.ablate_text:
                 if self._recursive_texts:
                     text = ' '.join(node.all_texts(max_words=self._max_words))
                 else:
                     text = node.text or ''
-                texts.append(word_tokenize2(text))
+                texts.append(utterance_embedder.tokenize(text))
             else:
                 texts.append([])
-        text_embeddings = self._utterance_embedder(texts)
+        text_embeddings = utterance_embedder(texts)
 
         # num_nodes x attr_embed_dim
         tags = [node.tag for node in nodes]
         tag_embeddings = self._tag_embedder.embed_tokens(tags)
+
         # num_nodes x attr_embed_dim
+        id_embedder = self._id_embedder
         if not self.ablate_attrs:
-            ids = [word_tokenize2(node.id_) for node in nodes]
+            ids = [id_embedder.tokenize(node.id_) for node in nodes]
         else:
             ids = [[] for node in nodes]
-        id_embeddings = self._id_embedder(ids)
+        id_embeddings = id_embedder(ids)
+
         # num_nodes x attr_embed_dim
+        classes_embedder = self._classes_embedder
         if not self.ablate_attrs:
-            classes = [word_tokenize2(' '.join(node.classes)) for node in nodes]
+            classes = [classes_embedder.tokenize(' '.join(node.classes)) for node in nodes]
         else:
             classes = [[] for node in nodes]
         class_embeddings = self._classes_embedder(classes)
 
+        other_embedder = self._other_embedder
         if not self.ablate_attrs:
-            other = [word_tokenize2(semantic_attrs(node.attributes)) for node in nodes]
+            other = [other_embedder.tokenize(semantic_attrs(node.attributes)) for node in nodes]
         else:
             other = [[] for node in nodes]
         other_embeddings = self._other_embedder(other)
+
         # num_nodes x 3
         coords = V(torch.tensor([[node.x_ratio, node.y_ratio, float(node.visible)] for node in nodes], dtype=torch.float32))
 

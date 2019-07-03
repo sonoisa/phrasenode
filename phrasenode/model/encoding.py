@@ -13,7 +13,6 @@ from gtd.ml.torch.utils import isfinite
 
 from phrasenode.constants import GraphRels
 from phrasenode.node_filter import get_node_filter
-from phrasenode.utils import word_tokenize2
 
 
 class EncodingModel(nn.Module):
@@ -75,10 +74,11 @@ class EncodingModel(nn.Module):
         node_embeddings = node_embeddings / torch.clamp(node_embeddings.norm(p=2, dim=1, keepdim=True), min=1e-8)
         # Embed the phrases + normalize
         phrases = []
+        phrase_embedder = self.phrase_embedder
         for example in examples:
-            phrases.append(word_tokenize2(example.phrase.lower()))
+            phrases.append(phrase_embedder.tokenize(example.phrase.lower()))
         # num_phrases x dim
-        phrase_embeddings = self.phrase_embedder(phrases)
+        phrase_embeddings = phrase_embedder(phrases)
         if self.proj is not None:
             phrase_embeddings = F.sigmoid(self.proj(phrase_embeddings))
         else:

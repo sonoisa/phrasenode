@@ -15,7 +15,6 @@ from gtd.ml.torch.utils import send_to_device as V, isfinite
 
 from phrasenode.constants import UNK, EOS, TAGS, GraphRels
 from phrasenode.node_filter import get_node_filter
-from phrasenode.utils import word_tokenize2
 from phrasenode.vocab import RandomEmbeddings
 
 
@@ -126,6 +125,7 @@ class AlignmentModel(nn.Module):
             losses (Tensor): num_phrases
             predictions (Tensor): num_phrases
         """
+        phrase_embedder = self.phrase_embedder
 
         def max_scorer(pairwise_scores):
             """
@@ -182,10 +182,10 @@ class AlignmentModel(nn.Module):
             text = ' '.join(node.all_texts(max_words=self.max_words))
             output = []
             if not self.ablate_text:
-                output += word_tokenize2(text)
+                output += phrase_embedder.tokenize(text)
             if not self.ablate_attrs:
                 # TODO better way to include attributes?
-                output += word_tokenize2(semantic_attrs(node.attributes))
+                output += phrase_embedder.tokenize(semantic_attrs(node.attributes))
             texts.append(output)
 
         embedded_texts = embed_tokens(self.token_embedder, self.max_words, texts)
@@ -199,7 +199,7 @@ class AlignmentModel(nn.Module):
 
         if not self.use_neighbors:
             for example in examples:
-                phrase = [word_tokenize2(example.phrase)]
+                phrase = [phrase_embedder.tokenize(example.phrase)]
                 embedded_phrase = embed_tokens(self.token_embedder, self.max_words, phrase)
 
                 embedded_phrase_values = self.dropout(embedded_phrase.values)
@@ -215,7 +215,7 @@ class AlignmentModel(nn.Module):
         else:
             intermediate_scores = []
             for example in examples:
-                phrase = [word_tokenize2(example.phrase)]
+                phrase = [phrase_embedder.tokenize(example.phrase)]
                 embedded_phrase = embed_tokens(self.token_embedder, self.max_words, phrase)
 
                 embedded_phrase_values = self.dropout(embedded_phrase.values)
@@ -276,7 +276,7 @@ class AlignmentModel(nn.Module):
         # print logits, targets, mask, losses
         if not isfinite(losses.detach().sum()):
             # raise ValueError('Losses has NaN')
-            logging.warn('Losses has NaN')
+            logging.warning('Losses has NaN')
             # print losses
         # num_phrases x top_k
         top_k = min(self.top_k, len(web_page.nodes))

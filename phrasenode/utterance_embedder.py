@@ -1,4 +1,5 @@
 """Utterance embedder"""
+import re
 import torch
 import torch.nn as nn
 
@@ -7,6 +8,44 @@ from gtd.ml.torch.seq_batch import SequenceBatch
 from gtd.ml.torch.source_encoder import BidirectionalSourceEncoder
 
 from phrasenode.constants import EOS
+
+
+################################################
+# Tokenization
+
+TOKENIZER = re.compile(r'[^\W_]+|[^\w\s-]', re.UNICODE | re.MULTILINE | re.DOTALL)
+
+
+def word_tokenize(text):
+    """Tokenize without keeping the mapping to the original string.
+
+    Args:
+        text (str or unicode)
+    Return:
+        list[unicode]
+    """
+    return TOKENIZER.findall(text)
+
+
+TOKENIZER2 = re.compile(r"[A-Z]{2,}(?![a-z])|[A-Z][a-z]+(?=[A-Z])|[\'\w]+", re.UNICODE | re.MULTILINE | re.DOTALL)
+
+
+# courtesy https://stackoverflow.com/questions/6202549/word-tokenization-using-python-regular-expressions
+def word_tokenize2(text):
+    """Tokenize without keeping the mapping to the original string.
+    Removes punctuation, keeps dashes, and splits on capital letters correctly.
+    Returns tokenized words in lower case.
+    E.g.
+    Jeff's dog is un-American SomeTimes! BUT NOTAlways
+    ['jeff's', 'dog', 'is', 'un', 'american', 'some', 'times', 'but', 'not', 'always']
+
+
+    Args:
+        text (str or unicode)
+    Return:
+        list[unicode]
+    """
+    return [s.lower() for s in TOKENIZER2.findall(text)]
 
 
 ################################################
@@ -62,6 +101,9 @@ class AverageUtteranceEmbedder(nn.Module):
     def token_embedder(self):
         return self._token_embedder
 
+    def tokenize(self, text):
+        return word_tokenize2(text)
+
 
 class LSTMUtteranceEmbedder(nn.Module):
     """Takes a string, embeds the tokens using the token_embedder, and passes
@@ -116,6 +158,9 @@ class LSTMUtteranceEmbedder(nn.Module):
     @property
     def token_embedder(self):
         return self._token_embedder
+
+    def tokenize(self, text):
+        return word_tokenize2(text)
 
 
 class AttentionUtteranceEmbedder(nn.Module):
@@ -176,3 +221,6 @@ class AttentionUtteranceEmbedder(nn.Module):
     @property
     def token_embedder(self):
         return self._token_embedder
+
+    def tokenize(self, text):
+        return word_tokenize2(text)

@@ -4,7 +4,6 @@ import torch.nn as nn
 from gtd.ml.torch.token_embedder import TokenEmbedder
 
 from phrasenode.utterance_embedder import AverageUtteranceEmbedder, LSTMUtteranceEmbedder
-from phrasenode.utils import word_tokenize2
 from phrasenode.vocab import GloveEmbeddings
 
 
@@ -47,10 +46,11 @@ class StupidEmbedder(nn.Module):
             embeddings (Tensor): num_nodes x embed_dim
         """
         texts = []
+        utterance_embedder = self._utterance_embedder
         for node in nodes:
             text = ' '.join(node.all_texts(max_words=self._max_words))
             # texts.append([x.lower() for x in word_tokenize(text)])
-            texts.append(word_tokenize2(text))
+            texts.append(utterance_embedder.tokenize(text))
         text_embeddings = self._utterance_embedder(texts)
         return text_embeddings
 
