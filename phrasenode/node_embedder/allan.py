@@ -22,13 +22,14 @@ def semantic_attrs(attrs):
 
 class AllanBaseEmbedder(nn.Module):
 
-    def __init__(self, dim, utterance_embedder, recursive_texts,
+    def __init__(self, dim, utterance_embedder, attribute_embedder, recursive_texts,
                  attr_embed_dim, max_attr_tokens, min_id_freq, min_class_freq, dropout,
                  ablate_text=False, ablate_attrs=False):
         """
         Args:
             dim (int): Target embedding dimension
             utterance_embedder (UtteranceEmbedder)
+            attribute_embedder (UtteranceEmbedder)
             recursive_texts (bool): For node text, whether to recursively combine the
                 texts of the descendants
             attr_embed_dim (int): Size of each attribute embedding
@@ -64,7 +65,7 @@ class AllanBaseEmbedder(nn.Module):
         # self._classes_embedder = attr_embedder
         coords_dim = 3
 
-        self._other_embedder = self.utterance_embedder
+        self._other_embedder = attribute_embedder
 
         # Combine
         input_dim = (2 * self._utterance_embedder.embed_dim + 3 * attr_embed_dim + coords_dim)
@@ -184,10 +185,11 @@ def get_allan_embedder(config):
     # Attribute embedder
     # attr_embedder = make_embedder(attr_token_embedder, cma)
     # AverageUtteranceEmbedder(TokenEmbedder(RandomEmbeddings(ids, attr_embed_dim)), max_attr_tokens)
+    attr_embedder = utterance_embedder
 
     # Base node embedder
     base_embedder = AllanBaseEmbedder(cm.dim,
-                                      utterance_embedder, cmb.recursive_texts,
+                                      utterance_embedder, attr_embedder, cmb.recursive_texts,
                                       cmt.glove_dim, cmb.max_attr_tokens,
                                       cmb.min_id_freq, cmb.min_class_freq, cm.dropout,
                                       ablate_text=cm.ablate_text, ablate_attrs=cm.ablate_attrs)
