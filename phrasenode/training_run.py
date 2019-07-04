@@ -158,10 +158,10 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                         dev_stats.add(ex_stats)
                     print('DEV @ {}: {}'.format(step, dev_stats))
                     if config.log.floyd:
-                        print('{{"metric": "DEV_loss", "value": {}, "step":{}}'.format(dev_stats.loss, step))
-                        print('{{"metric": "DEV_accuracy", "value": {}, "step":{}}'.format(dev_stats.accuracy, step))
-                        print('{{"metric": "DEV_area_f1", "value": {}, "step":{}}'.format(dev_stats.area_f1, step))
-                        print('{{"metric": "DEV_str_acc", "value": {}, "step":{}}'.format(dev_stats.str_acc, step))
+                        print('{{"metric": "DEV_loss", "value": {}, "step":{}}}'.format(dev_stats.loss, step))
+                        print('{{"metric": "DEV_accuracy", "value": {}, "step":{}}}'.format(dev_stats.accuracy, step))
+                        print('{{"metric": "DEV_area_f1", "value": {}, "step":{}}}'.format(dev_stats.area_f1, step))
+                        print('{{"metric": "DEV_str_acc", "value": {}, "step":{}}}'.format(dev_stats.str_acc, step))
                     dev_stats.log(self.tb_logger, step, 'pn_dev_', ignore_grad_norm=True)
 
             if step % config.timing.test_freq == 0:
@@ -178,10 +178,10 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                         test_stats.add(ex_stats)
                     print('TEST @ {}: {}'.format(step, test_stats))
                     if config.log.floyd:
-                        print('{{"metric": "TEST_loss", "value": {}, "step":{}}'.format(test_stats.loss, step))
-                        print('{{"metric": "TEST_accuracy", "value": {}, "step":{}}'.format(test_stats.accuracy, step))
-                        print('{{"metric": "TEST_area_f1", "value": {}, "step":{}}'.format(test_stats.area_f1, step))
-                        print('{{"metric": "TEST_str_acc", "value": {}, "step":{}}'.format(test_stats.str_acc, step))
+                        print('{{"metric": "TEST_loss", "value": {}, "step":{}}}'.format(test_stats.loss, step))
+                        print('{{"metric": "TEST_accuracy", "value": {}, "step":{}}}'.format(test_stats.accuracy, step))
+                        print('{{"metric": "TEST_area_f1", "value": {}, "step":{}}}'.format(test_stats.area_f1, step))
+                        print('{{"metric": "TEST_str_acc", "value": {}, "step":{}}}'.format(test_stats.str_acc, step))
                     test_stats.log(self.tb_logger, step, 'pn_test_', ignore_grad_norm=True)
 
     def _get_data_group_list(self, data_dict, shuffle=False):
