@@ -9,6 +9,8 @@ timing {
 }
 
 log {
+  tqdm = true
+  floyd = false
   checkpoints {
     keep_last = 2             # keep this number of last checkpoints
     keep_every = 10000        # ... and all checkpoints divisible by this

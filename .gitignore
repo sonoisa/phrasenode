@@ -6,6 +6,8 @@
 
 .DS_Store
 data.html
+.floydexpt
+floyd.yml
 
 /.idea
 /.ipynb_checkpoints

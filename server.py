@@ -46,7 +46,7 @@ config_strings = []
 config_paths = args.config_paths
 if len(config_paths) == 1 and config_paths[0].isdigit():
     # Get configs from a run
-    run_dirname = IntegerDirectories(data.workspace.experiments)[int(config_paths[0])]
+    run_dirname = IntegerDirectories(data.output_workspace.experiments)[int(config_paths[0])]
     with open(join(run_dirname, 'config.txt')) as fin:
         config_strings.append(fin.read())
 else:

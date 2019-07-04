@@ -1,6 +1,8 @@
 import os
 import re
 
+from tqdm import tqdm
+
 
 def create_experiment_dir(outdir):
     assert os.path.isdir(outdir)
@@ -13,6 +15,13 @@ def create_experiment_dir(outdir):
     exp_dir = os.path.join(outdir, str(id_))
     os.mkdir(exp_dir)
     return exp_dir
+
+
+def get_tqdm(values, desc, enabled=True):
+    if enabled:
+        return tqdm(values, desc=desc)
+    else:
+        return values
 
 
 ################################################

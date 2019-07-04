@@ -33,6 +33,7 @@ If you just want to see something happen:
 
 ```
 export WEBREP_DATA=./data
+export OUTPUT_DATA=./data
 ./main.py configs/base.txt configs/model/encoding.txt configs/node-embedder/allan.txt -n testrun
 ```
 

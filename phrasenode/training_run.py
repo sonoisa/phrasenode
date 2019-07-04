@@ -13,8 +13,6 @@ import torch.optim as optim
 
 from os.path import dirname, realpath, join
 
-from tqdm import tqdm
-
 from torch.nn.utils import clip_grad_norm_
 
 from gtd.ml.torch.training_run import TorchTrainingRun
@@ -24,12 +22,12 @@ from gtd.ml.torch.utils import get_default_device
 from phrasenode import data
 from phrasenode.dataset import PhraseNodeStorage
 from phrasenode.model import create_model
-from phrasenode.utils import Stats
+from phrasenode.utils import Stats, get_tqdm
 
 
 class PhraseNodeTrainingRuns(TrainingRuns):
     def __init__(self, check_commit=True):
-        data_dir = data.workspace.experiments
+        data_dir = data.output_workspace.experiments
         src_dir = dirname(realpath(join(__file__, '..')))
         super(PhraseNodeTrainingRuns, self).__init__(
             data_dir, src_dir, PhraseNodeTrainingRun, check_commit=check_commit)
@@ -116,7 +114,7 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
         # Training loop
         min_step = self.train_state.train_steps + 1
         max_step = config.timing.max_control_steps
-        for step in tqdm(range(min_step, max_step + 1), desc='Training'):
+        for step in get_tqdm(range(min_step, max_step + 1), desc='Training', enabled=config.log.tqdm):
             self.train_state.increment_train_steps()
             assert step == self.train_state.train_steps
 
@@ -159,6 +157,11 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                             web_page_code, examples, train=False, logfile=dev_logfile)
                         dev_stats.add(ex_stats)
                     print('DEV @ {}: {}'.format(step, dev_stats))
+                    if config.log.floyd:
+                        print('{{"metric": "DEV_loss", "value": {}}, "step":{}}'.format(dev_stats.loss, step))
+                        print('{{"metric": "DEV_accuracy", "value": {}}, "step":{}}'.format(dev_stats.accuracy, step))
+                        print('{{"metric": "DEV_area_f1", "value": {}}, "step":{}}'.format(dev_stats.area_f1, step))
+                        print('{{"metric": "DEV_str_acc", "value": {}}, "step":{}}'.format(dev_stats.str_acc, step))
                     dev_stats.log(self.tb_logger, step, 'pn_dev_', ignore_grad_norm=True)
 
             if step % config.timing.test_freq == 0:
@@ -174,6 +177,11 @@ class PhraseNodeTrainingRun(TorchTrainingRun):
                             web_page_code, examples, train=False, logfile=test_logfile)
                         test_stats.add(ex_stats)
                     print('TEST @ {}: {}'.format(step, test_stats))
+                    if config.log.floyd:
+                        print('{{"metric": "TEST_loss", "value": {}}, "step":{}}'.format(test_stats.loss, step))
+                        print('{{"metric": "TEST_accuracy", "value": {}}, "step":{}}'.format(test_stats.accuracy, step))
+                        print('{{"metric": "TEST_area_f1", "value": {}}, "step":{}}'.format(test_stats.area_f1, step))
+                        print('{{"metric": "TEST_str_acc", "value": {}}, "step":{}}'.format(test_stats.str_acc, step))
                     test_stats.log(self.tb_logger, step, 'pn_test_', ignore_grad_norm=True)
 
     def _get_data_group_list(self, data_dict, shuffle=False):
