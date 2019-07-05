@@ -46,9 +46,9 @@ class PhraseNodeEvalRun(object):
         example_path = join(os.environ['WEBREP_DATA'], 'phrase-node-dataset', 'data', 'eval.jsonl')
         info_path = join(os.environ['WEBREP_DATA'], 'phrase-node-dataset', 'infos', 'eval', 'info-eval.gz')
 
-        with open(example_path, 'wb') as f:
-            json.dump(example, f)
-        with gzip.open(info_path, 'wb') as f:
+        with open(example_path, 'w') as f:
+            json.dump(example, f, ensure_ascii=False)
+        with gzip.open(info_path, 'wt') as f:
             # info is already JSON-serialized
             f.write(info)
 
