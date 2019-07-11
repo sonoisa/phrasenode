@@ -12,5 +12,6 @@ floyd.yml
 /.idea
 /.ipynb_checkpoints
 /data
+/data_en
 /env
 /downloads

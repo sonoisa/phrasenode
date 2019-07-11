@@ -20,5 +20,6 @@ data.html
 /.idea
 /.ipynb_checkpoints
 /data
+/data_en
 /env
 /downloads
