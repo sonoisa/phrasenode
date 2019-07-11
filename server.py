@@ -84,6 +84,7 @@ def eval():
     info = json.loads(q.info)
     info = json.dumps(info, ensure_ascii=True)
     answer = eval_run.eval(phrase, info)
+    # print(answer)
     return {'query': q.query, 'answer': answer['preds'][0]['xid']}
 
 
