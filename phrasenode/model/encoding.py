@@ -111,7 +111,7 @@ class EncodingModel(nn.Module):
 
                 encoding = [p]
                 neighbor_scores = torch.split(neighbor_scores, 1, dim=1)
-                neighbor_scores = map(lambda x: torch.squeeze(x, dim=1), neighbor_scores)
+                neighbor_scores = list(map(lambda x: torch.squeeze(x, dim=1), neighbor_scores))
                 for n in [node_embeddings] + neighbor_scores:
                     encoding += [n, p*n]
                 encoding = torch.cat(encoding, dim=1)
