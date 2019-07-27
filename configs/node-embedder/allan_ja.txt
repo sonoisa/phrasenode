@@ -22,8 +22,3 @@ model {
     }
   }
 }
-
-log {
-  tqdm = false
-  floyd = true
-}

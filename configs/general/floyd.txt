@@ -1,0 +1,4 @@
+log {
+  tqdm = false
+  floyd = true
+}
